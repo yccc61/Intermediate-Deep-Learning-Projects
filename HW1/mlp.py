@@ -103,7 +103,7 @@ class LeakyReLU(Transform):
     LeakyReLU non-linearity, combined with dropout
     IMPORTANT the Autograder assumes these function signatures
     """
-    def __init__(self, alpha=0.1, dropout_probability=0):
+    def __init__(self, alpha, dropout_probability=0):
         """
         :param dropout_probability: dropout probability
         """
@@ -312,7 +312,7 @@ class SingleLayerMLP(Transform):
     Implement this class
     """
     def __init__(self, indim, outdim, hiddenlayer=100,
-                 alpha=0.1, dropout_probability=0, lr=0.01):
+                 alpha=0.1, leakyReluAlpha=0.1,dropout_probability=0, lr=0.01):
         """
         :param indim: input dimension
         :param outdim: output dimension
@@ -323,7 +323,7 @@ class SingleLayerMLP(Transform):
         """
         Transform.__init__(self)
         self.linear=LinearMap(indim=indim, outdim=hiddenlayer, alpha=alpha, lr=lr)
-        self.activation=LeakyReLU(alpha=alpha, dropout_probability=dropout_probability)
+        self.activation=LeakyReLU(alpha=leakyReluAlpha, dropout_probability=dropout_probability)
         self.hiddenLayer=LinearMap(indim=hiddenlayer, outdim=outdim, alpha=alpha, lr=lr)
 
 
@@ -397,7 +397,7 @@ class TwoLayerMLP(Transform):
     Everything similar to SingleLayerMLP
     """
     def __init__(self, indim, outdim, hiddenlayers=[100,100],
-                 alpha=0.1, dropout_probability=0, lr=0.01):
+                 alpha=0.1, leakyReluAlpha=0.1, dropout_probability=0, lr=0.01):
         """
         :param indim: input dimension
         :param outdim: output dimension
@@ -407,9 +407,9 @@ class TwoLayerMLP(Transform):
         :param lr: learning rate
         """
         self.linear1=LinearMap(indim=indim, outdim=hiddenlayers[0], alpha=alpha, lr=lr)
-        self.activation1=LeakyReLU(alpha=alpha, dropout_probability=dropout_probability)
+        self.activation1=LeakyReLU(alpha=leakyReluAlpha, dropout_probability=dropout_probability)
         self.linear2=LinearMap(indim=hiddenlayers[0], outdim=hiddenlayers[1], alpha=alpha, lr=lr)
-        self.activation2=LeakyReLU(alpha=alpha, dropout_probability=dropout_probability)
+        self.activation2=LeakyReLU(alpha=leakyReluAlpha, dropout_probability=dropout_probability)
         self.linear3=LinearMap(indim=hiddenlayers[1], outdim=outdim, alpha=alpha, lr=lr)
 
     def forward(self, x, train=True):
@@ -514,6 +514,10 @@ if __name__ == '__main__':
     model1c=SingleLayerMLP(indim, outdim, hiddenlayer=40, alpha=0.4, dropout_probability=0.2, lr=0.001)
     model1d=SingleLayerMLP(indim, outdim, hiddenlayer=100, alpha=0.4, dropout_probability=0.2, lr=0.001)
 
+    model2a=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40],alpha=0, dropout_probability=0, lr=0.001)
+    model2b=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40],alpha=0.4, dropout_probability=0, lr=0.001)
+    model2c=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40], alpha=0.4, dropout_probability=0.2, lr=0.001)
+    model2d=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100], alpha=0.4, dropout_probability=0.2, lr=0.001)
     def training_loop(model):
         train_losses=[]
         test_losses=[]
@@ -594,7 +598,43 @@ if __name__ == '__main__':
     plt.legend()
     plt.savefig('SingleLayer_Accuracies.png')
 
-        
+    train_losses2a, test_losses2a, train_accuracies2a, test_accuracies2a=training_loop(model2a)
+    train_losses2b, test_losses2b, train_accuracies2b, test_accuracies2b=training_loop(model2b)
+    train_losses2c, test_losses2c, train_accuracies2c, test_accuracies2c=training_loop(model2c)
+    train_losses2d, test_losses2d, train_accuracies2d, test_accuracies2d=training_loop(model2d)
+
+    # Plotting
+    plt.figure()
+    plt.plot(np.arange(200), train_losses2a, label='Train Loss (a)')
+    plt.plot(np.arange(200), train_losses2b, label='Train Loss (b)')
+    plt.plot(np.arange(200), train_losses2c, label='Train Loss (c)')
+    plt.plot(np.arange(200), train_losses2d, label='Train Loss (d)')
+
+    plt.plot(np.arange(200), test_losses2a, label='Test Loss (a)')
+    plt.plot(np.arange(200), test_losses2b, label='Test Loss (b)')
+    plt.plot(np.arange(200), test_losses2c, label='Test Loss (c)')
+    plt.plot(np.arange(200), test_losses2d, label='Test Loss (d)')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Double layer test and train loss over epochs')
+    plt.legend()
+    plt.savefig('Double_Layer_Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(200), train_accuracies2a, label='Train Accuracy (a)')
+    plt.plot(np.arange(200), train_accuracies2b, label='Train Accuracy (b)')
+    plt.plot(np.arange(200), train_accuracies2c, label='Train Accuracy (c)')
+    plt.plot(np.arange(200), train_accuracies2d, label='Train Accuracy (d)')
+
+    plt.plot(np.arange(200), test_accuracies2a, label='Test Accuracy (a)')
+    plt.plot(np.arange(200), test_accuracies2b, label='Test Accuracy (b)')
+    plt.plot(np.arange(200), test_accuracies2c, label='Test Accuracy (c)')
+    plt.plot(np.arange(200), test_accuracies2d, label='Test Accuracy (d)')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracies')
+    plt.title('Double Layer model test and train accuracies over epochs')
+    plt.legend()
+    plt.savefig('Double_Layer_Accuracies.png')
 
 
 
