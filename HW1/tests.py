@@ -69,7 +69,7 @@ class TestLeakyReLU(unittest.TestCase):
     test7 = (np.arange(36).reshape((18, 2))-18).astype('float64')
     assert_allclose(sl.forward(test7, train=False), tests["leakyrelu_test7a"])
     assert_allclose(sl.forward(test7), tests["leakyrelu_test7b"])
-  
+    
     test8 = (np.arange(36).reshape((18, 2))-22).astype('float64')
     assert_allclose(sl.backward(test8), tests["leakyrelu_test8"])
 

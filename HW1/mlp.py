@@ -7,7 +7,6 @@ IMPORTANT:
 
 September 2024
 """
-
 import numpy as np
 import matplotlib.pyplot as plt
 def random_weight_init(input, output):
@@ -16,7 +15,7 @@ def random_weight_init(input, output):
 
     :param input: input dimension
     :param output: output dimension
-    :return: (output x input) matrix with random weights 
+    :return: (output x input) matrix with random weights
     """
     b = np.sqrt(6) / np.sqrt(input + output)
     return np.random.uniform(-b, b, (output, input))
@@ -26,7 +25,7 @@ def zeros_bias_init(outd):
     Initializes zero bias vector
 
     :param output: output dimension
-    :return: (output x 1) matrix with zeros 
+    :return: (output x 1) matrix with zeros
     """
     return np.zeros((outd, 1))
 
@@ -73,7 +72,7 @@ class Transform:
         NOTE:
         In this function, we accumulate and save the gradient values instead
         of assigning the gradient values.
-        
+
         This allows us to call forward and backward multiple times while
         only updating the parameters once.
 
@@ -104,7 +103,7 @@ class LeakyReLU(Transform):
     LeakyReLU non-linearity, combined with dropout
     IMPORTANT the Autograder assumes these function signatures
     """
-    def __init__(self, alpha, dropout_probability=0):
+    def __init__(self, alpha=0.1, dropout_probability=0):
         """
         :param dropout_probability: dropout probability
         """
@@ -135,7 +134,7 @@ class LeakyReLU(Transform):
         else:
             expectation=1-self.dropout_probability
             self.leaky=expectation*self.leaky
-        
+
         return self.leaky
 
 
@@ -143,15 +142,15 @@ class LeakyReLU(Transform):
         """
         :param grad_wrt_out:
             (outdim, batch_size) gradient matrix from previous Transform
-        
+
         Hint: you may find np.where useful for this
         """
         grad_leaky=np.where(self.x<=0, self.alpha, 1)
         if self.dropout_mask is not None:
             grad_leaky=grad_leaky*self.dropout_mask
-        
+
         return grad_leaky*grad_wrt_out
-    
+
 
 class LinearMap(Transform):
     """
@@ -214,7 +213,7 @@ class LinearMap(Transform):
     def step(self):
         """
         Apply gradients calculated by backward() to update the parameters
-        
+
         NOTE:
         Make sure your gradient step takes into account momentum.
         Use alpha as the momentum parameter.
@@ -227,14 +226,14 @@ class LinearMap(Transform):
     def zerograd(self):
         self.grad_weights=np.zeros((self.outdim, self.indim))
         self.grad_b=np.zeros((self.outdim,1))
-    
+
 
     def getW(self):
         """
         :return: (outdim, indim), i.e. W shape
         """
         return self.weights
-    
+
     def getb(self):
         """
         :return: (outdim, 1), i.e. b shape
@@ -262,7 +261,7 @@ class SoftmaxCrossEntropyLoss:
             (num_classes, batch_size) matrix of pre-softmax scores
         :param labels:
             (num_classes, batch_size) matrix of true labels of given inputs
-        
+
         :return: loss as scalar
             (your loss should be the mean value over the batch)
 
@@ -297,15 +296,15 @@ class SoftmaxCrossEntropyLoss:
         Return accuracy here (as you wish).
         This part is not autograded.
         """
-       
+
         one_hot_softmax=(np.max(self.softmax, axis=0)==self.softmax).astype(int)
-        
+
         num_corrects=np.sum(one_hot_softmax*self.labels)
         accuracy=num_corrects/np.shape(one_hot_softmax)[1]
-        
+
         return accuracy
-       
-   
+
+
 
 
 class SingleLayerMLP(Transform):
@@ -327,7 +326,7 @@ class SingleLayerMLP(Transform):
         self.activation=LeakyReLU(alpha=alpha, dropout_probability=dropout_probability)
         self.hiddenLayer=LinearMap(indim=hiddenlayer, outdim=outdim, alpha=alpha, lr=lr)
 
-        
+
     def forward(self, x, train=True):
         """
         :param x: (indim, batch_size) input matrix
@@ -366,7 +365,7 @@ class SingleLayerMLP(Transform):
             e.g., Ws may be [LinearMap1.W, LinearMap2.W]
         :param bs: biases array list, first layer first
             e.g., Ws may be [LinearMap1.b, LinearMap2.b]
-        
+
         NOTE:
         Use LinearMap.loadparams() to implement this.
         """
@@ -412,7 +411,7 @@ class TwoLayerMLP(Transform):
         self.linear2=LinearMap(indim=hiddenlayers[0], outdim=hiddenlayers[1], alpha=alpha, lr=lr)
         self.activation2=LeakyReLU(alpha=alpha, dropout_probability=dropout_probability)
         self.linear3=LinearMap(indim=hiddenlayers[1], outdim=outdim, alpha=alpha, lr=lr)
-        
+
     def forward(self, x, train=True):
         """
         :param x: (indim, batch_size) input matrix
@@ -437,7 +436,7 @@ class TwoLayerMLP(Transform):
         activate1=self.activation1.backward(linear2)
         linear1=self.linear1.backward(activate1)
         return linear1
-    
+
     def step(self):
         self.linear1.step()
         self.linear2.step()
@@ -456,7 +455,7 @@ class TwoLayerMLP(Transform):
         self.linear1.loadparams(Ws[0], bs[0])
         self.linear2.loadparams(Ws[1], bs[1])
         self.linear3.loadparams(Ws[2], bs[2])
-        
+
 
     def getWs(self):
         w_linear1=self.linear1.getW()
@@ -478,18 +477,18 @@ if __name__ == '__main__':
 
     NOTE:
     You MUST use your class implementations to train the model and to get the results.
-    
+
     DO NOT use PyTorch or Tensorflow get the results.
-    
+
     The results generated using these libraries will be different as
     compared to your implementation.
     """
     with np.load('omniglot_12.npz') as data:
-        trainX = data['trainX'] 
-        testX = data['testX'] 
-        trainY = data['trainY'] 
+        trainX = data['trainX']
+        testX = data['testX']
+        trainY = data['trainY']
         testY = data['testY']
-    
+
     # for i in range(5):
     #     plt.imshow(trainX[i].reshape(105,105))
     #     plt.axis("off")
@@ -510,75 +509,91 @@ if __name__ == '__main__':
     indim=np.shape(trainX)[1]
     #number of labels
     outdim=12
-    model=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40],alpha=0, dropout_probability=0, lr=0.001)
-    
-    train_losses=[]
-    test_losses=[]
-    train_accuracies=[]
-    test_accuracies=[]
-    for i in range(epochs):
-        print("current epochs", i)
-        train_size=np.shape(trainX)[0]
-        randomized_indices=np.random.permutation(train_size)
-        shuffled_x=trainX[randomized_indices]
-        shuffled_y=trainY[randomized_indices]
+    model1a=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0, dropout_probability=0, lr=0.001)
+    model1b=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0.4, dropout_probability=0, lr=0.001)
+    model1c=SingleLayerMLP(indim, outdim, hiddenlayer=40, alpha=0.4, dropout_probability=0.2, lr=0.001)
+    model1d=SingleLayerMLP(indim, outdim, hiddenlayer=100, alpha=0.4, dropout_probability=0.2, lr=0.001)
 
-        for j in range(num_batches):
-            curr_x_batch=shuffled_x[j*batch_size:(j+1)*batch_size,:]
-            curr_y_batch=shuffled_y[j*batch_size:(j+1)*batch_size]
-        
-            curr_y_labels=labels2onehot(curr_y_batch)
-            #Reset gradients
-            model.zerograd()
-            
-            #Forward pass
-            pre_softmax=model.forward(curr_x_batch.T)
+    def training_loop(model):
+        train_losses=[]
+        test_losses=[]
+        train_accuracies=[]
+        test_accuracies=[]
+        for i in range(epochs):
+            print("current epochs", i)
+            train_size=np.shape(trainX)[0]
+            randomized_indices=np.random.permutation(train_size)
+            shuffled_x=trainX[randomized_indices]
+            shuffled_y=trainY[randomized_indices]
 
-            #Calculate loss and gradient
-            softmax_layer=SoftmaxCrossEntropyLoss()
-            loss=softmax_layer.forward(pre_softmax, curr_y_labels.T)
+            for j in range(num_batches):
+                curr_x_batch=shuffled_x[j*batch_size:(j+1)*batch_size,:]
+                curr_y_batch=shuffled_y[j*batch_size:(j+1)*batch_size]
 
-            #Backward pass
-            grad_wrt_out=softmax_layer.backward()
-            model.backward(grad_wrt_out)
+                curr_y_labels=labels2onehot(curr_y_batch)
+                #Reset gradients
+                model.zerograd()
 
-            #Apply gradients
-            model.step()
-        train_labels=labels2onehot(trainY)
-        test_labels=labels2onehot(testY)
-        (train_loss, train_accuracy)=get_loss_accuracy(trainX.T, train_labels.T, model)
-        (test_loss, test_accuracy)=get_loss_accuracy(testX.T, test_labels.T,model)
-        train_losses.append(train_loss)
-        train_accuracies.append(train_accuracy)
-        test_losses.append(test_loss)
-        test_accuracies.append(test_accuracy)
+                #Forward pass
+                pre_softmax=model.forward(curr_x_batch.T)
+
+                #Calculate loss and gradient
+                softmax_layer=SoftmaxCrossEntropyLoss()
+                loss=softmax_layer.forward(pre_softmax, curr_y_labels.T)
+
+                #Backward pass
+                grad_wrt_out=softmax_layer.backward()
+                model.backward(grad_wrt_out)
+
+                #Apply gradients
+                model.step()
+            train_labels=labels2onehot(trainY)
+            test_labels=labels2onehot(testY)
+            (train_loss, train_accuracy)=get_loss_accuracy(trainX.T, train_labels.T, model)
+            (test_loss, test_accuracy)=get_loss_accuracy(testX.T, test_labels.T,model)
+            train_losses.append(train_loss)
+            train_accuracies.append(train_accuracy)
+            test_losses.append(test_loss)
+            test_accuracies.append(test_accuracy)
+        return train_losses, test_losses, train_accuracies, test_accuracies
+
+    train_losses1a, test_losses1a, train_accuracies1a, test_accuracies1a=training_loop(model1a)
+    train_losses1b, test_losses1b, train_accuracies1b, test_accuracies1b=training_loop(model1b)
+    train_losses1c, test_losses1c, train_accuracies1c, test_accuracies1c=training_loop(model1c)
+    train_losses1d, test_losses1d, train_accuracies1d, test_accuracies1d=training_loop(model1d)
     # Plotting
     plt.figure()
-    plt.plot(np.arange(200), train_losses, label='Train Loss')
-    plt.plot(np.arange(200), test_losses, label='Test Loss')
+    plt.plot(np.arange(200), train_losses1a, label='Train Loss (a)')
+    plt.plot(np.arange(200), train_losses1b, label='Train Loss (b)')
+    plt.plot(np.arange(200), train_losses1c, label='Train Loss (c)')
+    plt.plot(np.arange(200), train_losses1d, label='Train Loss (d)')
 
+    plt.plot(np.arange(200), test_losses1a, label='Test Loss (a)')
+    plt.plot(np.arange(200), test_losses1b, label='Test Loss (b)')
+    plt.plot(np.arange(200), test_losses1c, label='Test Loss (c)')
+    plt.plot(np.arange(200), test_losses1d, label='Test Loss (d)')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Train vs Test Loss Over Epochs')
-
+    plt.title('Single Layer model test and train loss over epochs')
     plt.legend()
-    plt.savefig('Train_loss.png')
+    plt.savefig('SingleLayer_Loss.png')
 
     plt.figure()
-    plt.plot(np.arange(200), train_accuracies, label='Train accuracies')
-    plt.plot(np.arange(200), test_accuracies, label='Test accuracies')
+    plt.plot(np.arange(200), train_accuracies1a, label='Train Accuracy (a)')
+    plt.plot(np.arange(200), train_accuracies1b, label='Train Accuracy (b)')
+    plt.plot(np.arange(200), train_accuracies1c, label='Train Accuracy (c)')
+    plt.plot(np.arange(200), train_accuracies1d, label='Train Accuracy (d)')
 
+    plt.plot(np.arange(200), test_accuracies1a, label='Test Accuracy (a)')
+    plt.plot(np.arange(200), test_accuracies1b, label='Test Accuracy (b)')
+    plt.plot(np.arange(200), test_accuracies1c, label='Test Accuracy (c)')
+    plt.plot(np.arange(200), test_accuracies1d, label='Test Accuracy (d)')
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.title('Train vs Test Accuracies Over Epochs')
-
-    # Adding a legend
+    plt.ylabel('Accuracies')
+    plt.title('Single Layer model test and train accuracies over epochs')
     plt.legend()
-    plt.savefig('Train_accuracies.png')
-    # Display the plot
-    plt.show()
+    plt.savefig('SingleLayer_Accuracies.png')
 
-        
         
 
 
