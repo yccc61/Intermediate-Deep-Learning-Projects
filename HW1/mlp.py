@@ -518,6 +518,17 @@ if __name__ == '__main__':
     model2b=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40],alpha=0.4, dropout_probability=0, lr=0.001)
     model2c=TwoLayerMLP(indim, outdim, hiddenlayers=[40,40], alpha=0.4, dropout_probability=0.2, lr=0.001)
     model2d=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100], alpha=0.4, dropout_probability=0.2, lr=0.001)
+
+    #2.3
+    model3a=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100],alpha=0, dropout_probability=0, lr=0.001)
+    model3b=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100],alpha=0, dropout_probability=0.05, lr=0.001)
+    model3c=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100], alpha=0, dropout_probability=0.5, lr=0.001)
+    
+    #2.4
+    model4a=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0.4, dropout_probability=0.2, lr=0.001)
+    model4b=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0.4, dropout_probability=0.2, lr=0.01)
+    model4c=SingleLayerMLP(indim, outdim, hiddenlayer=40, alpha=0.4, dropout_probability=0.2, lr=0.1)
+
     def training_loop(model):
         train_losses=[]
         test_losses=[]
@@ -565,7 +576,7 @@ if __name__ == '__main__':
     train_losses1b, test_losses1b, train_accuracies1b, test_accuracies1b=training_loop(model1b)
     train_losses1c, test_losses1c, train_accuracies1c, test_accuracies1c=training_loop(model1c)
     train_losses1d, test_losses1d, train_accuracies1d, test_accuracies1d=training_loop(model1d)
-    # Plotting
+    # Plotting for 2.1
     plt.figure()
     plt.plot(np.arange(200), train_losses1a, label='Train Loss (a)')
     plt.plot(np.arange(200), train_losses1b, label='Train Loss (b)')
@@ -603,7 +614,7 @@ if __name__ == '__main__':
     train_losses2c, test_losses2c, train_accuracies2c, test_accuracies2c=training_loop(model2c)
     train_losses2d, test_losses2d, train_accuracies2d, test_accuracies2d=training_loop(model2d)
 
-    # Plotting
+    # Plotting for 2.2
     plt.figure()
     plt.plot(np.arange(200), train_losses2a, label='Train Loss (a)')
     plt.plot(np.arange(200), train_losses2b, label='Train Loss (b)')
@@ -636,7 +647,73 @@ if __name__ == '__main__':
     plt.legend()
     plt.savefig('Double_Layer_Accuracies.png')
 
+#plotting for 2.3
+    train_losses3a, test_losses3a, train_accuracies3a, test_accuracies3a=training_loop(model3a)
+    train_losses3b, test_losses3b, train_accuracies3b, test_accuracies3b=training_loop(model3b)
+    train_losses3c, test_losses3c, train_accuracies3c, test_accuracies3c=training_loop(model3c)
 
+    plt.figure()
+    plt.plot(np.arange(200), train_losses3a, label='Train Loss (a)')
+    plt.plot(np.arange(200), train_losses3b, label='Train Loss (b)')
+    plt.plot(np.arange(200), train_losses3c, label='Train Loss (c)')
+
+    plt.plot(np.arange(200), test_losses3a, label='Test Loss (a)')
+    plt.plot(np.arange(200), test_losses3b, label='Test Loss (b)')
+    plt.plot(np.arange(200), test_losses3c, label='Test Loss (c)')
+
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Double layers with different droupout: loss over epochs')
+    plt.legend()
+    plt.savefig('2.3Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(200), train_accuracies3a, label='Train Accuracy (a)')
+    plt.plot(np.arange(200), train_accuracies3b, label='Train Accuracy (b)')
+    plt.plot(np.arange(200), train_accuracies3c, label='Train Accuracy (c)')
+
+    plt.plot(np.arange(200), test_accuracies3a, label='Test Accuracy (a)')
+    plt.plot(np.arange(200), test_accuracies3b, label='Test Accuracy (b)')
+    plt.plot(np.arange(200), test_accuracies3c, label='Test Accuracy (c)')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('Double Layer model with different droupout: accuracy over epochs')
+    plt.legend()
+    plt.savefig('2.3Accuracy.png')
+
+#plotting for 2.3
+    train_losses4a, test_losses4a, train_accuracies4a, test_accuracies4a=training_loop(model4a)
+    train_losses4b, test_losses4b, train_accuracies4b, test_accuracies4b=training_loop(model4b)
+    train_losses4c, test_losses4c, train_accuracies4c, test_accuracies4c=training_loop(model4c)
+
+    plt.figure()
+    plt.plot(np.arange(200), train_losses4a, label='Train Loss (a)')
+    plt.plot(np.arange(200), train_losses4b, label='Train Loss (b)')
+    plt.plot(np.arange(200), train_losses4c, label='Train Loss (c)')
+
+    plt.plot(np.arange(200), test_losses4a, label='Test Loss (a)')
+    plt.plot(np.arange(200), test_losses4b, label='Test Loss (b)')
+    plt.plot(np.arange(200), test_losses4c, label='Test Loss (c)')
+
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Single Layer with different learning rate: loss over epochs')
+    plt.legend()
+    plt.savefig('2.4Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(200), train_accuracies4a, label='Train Accuracy (a)')
+    plt.plot(np.arange(200), train_accuracies4b, label='Train Accuracy (b)')
+    plt.plot(np.arange(200), train_accuracies4c, label='Train Accuracy (c)')
+
+    plt.plot(np.arange(200), test_accuracies4a, label='Test Accuracy (a)')
+    plt.plot(np.arange(200), test_accuracies4b, label='Test Accuracy (b)')
+    plt.plot(np.arange(200), test_accuracies4c, label='Test Accuracy (c)')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('Single Layer with different learning rate: Accuracy over epochs')
+    plt.legend()
+    plt.savefig('2.4Accuracy.png')
 
 
 
