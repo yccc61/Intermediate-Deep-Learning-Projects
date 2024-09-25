@@ -525,9 +525,9 @@ if __name__ == '__main__':
     model3c=TwoLayerMLP(indim, outdim, hiddenlayers=[100,100], alpha=0, dropout_probability=0.5, lr=0.001)
     
     #2.4
-    model4a=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0.4, dropout_probability=0.2, lr=0.001)
-    model4b=SingleLayerMLP(indim, outdim, hiddenlayer=40,alpha=0.4, dropout_probability=0.2, lr=0.01)
-    model4c=SingleLayerMLP(indim, outdim, hiddenlayer=40, alpha=0.4, dropout_probability=0.2, lr=0.1)
+    model4a=SingleLayerMLP(indim, outdim, hiddenlayer=20,alpha=0.4, dropout_probability=0.2, lr=0.001)
+    model4b=SingleLayerMLP(indim, outdim, hiddenlayer=100,alpha=0.4, dropout_probability=0.2, lr=0.001)
+    model4c=SingleLayerMLP(indim, outdim, hiddenlayer=200, alpha=0.4, dropout_probability=0.2, lr=0.001)
 
     def training_loop(model):
         train_losses=[]
@@ -647,7 +647,7 @@ if __name__ == '__main__':
     plt.legend()
     plt.savefig('Double_Layer_Accuracies.png')
 
-#plotting for 2.3
+# plotting for 2.3
     train_losses3a, test_losses3a, train_accuracies3a, test_accuracies3a=training_loop(model3a)
     train_losses3b, test_losses3b, train_accuracies3b, test_accuracies3b=training_loop(model3b)
     train_losses3c, test_losses3c, train_accuracies3c, test_accuracies3c=training_loop(model3c)
@@ -681,7 +681,7 @@ if __name__ == '__main__':
     plt.legend()
     plt.savefig('2.3Accuracy.png')
 
-#plotting for 2.3
+#plotting for 2.4
     train_losses4a, test_losses4a, train_accuracies4a, test_accuracies4a=training_loop(model4a)
     train_losses4b, test_losses4b, train_accuracies4b, test_accuracies4b=training_loop(model4b)
     train_losses4c, test_losses4c, train_accuracies4c, test_accuracies4c=training_loop(model4c)
@@ -697,7 +697,7 @@ if __name__ == '__main__':
 
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Single Layer with different learning rate: loss over epochs')
+    plt.title('Single Layer with different hidden layer: loss over epochs')
     plt.legend()
     plt.savefig('2.4Loss.png')
 
