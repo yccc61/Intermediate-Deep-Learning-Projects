@@ -125,6 +125,7 @@ class LeakyReLU(Transform):
 
         Hint: you may find np.where useful for this.
         """
+        print("alpha is",self.alpha)
         self.x=x
         self.leaky=np.where(x<0, self.alpha*x, x)
         if train==True:

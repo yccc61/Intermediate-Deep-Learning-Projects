@@ -79,6 +79,7 @@ class TestLeakyReLUDropout(unittest.TestCase):
     sl = mlp.LeakyReLU(alpha=0.1, dropout_probability=0.5)
 
     test9 = (np.arange(36).reshape((18, 2))-18).astype('float64')
+    print("here")
     assert_allclose(sl.forward(test9, train=False), tests["leakyreludropout_test9a"])
     np.random.seed(seed)
     assert_allclose(sl.forward(test9), tests["leakyreludropout_test9b"])

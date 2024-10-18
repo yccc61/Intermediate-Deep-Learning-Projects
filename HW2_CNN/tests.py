@@ -34,7 +34,6 @@ class TestLeakyReLU(unittest.TestCase):
         
         out1 = tests["relu1"]
         out2 = tests["relu2"]
-        
         assert_allclose(sl.forward(test7, train=False), out1, atol=TOLERANCE)
         assert_allclose(sl.forward(test7), out2, atol=TOLERANCE)
 
@@ -61,10 +60,8 @@ class TestIm2Col(unittest.TestCase):
     def test(self):
         im2col_input = tests["im2col_input"]
         im2col_output = tests["im2col_output"]
-
         im2col_grad_X_col = tests["im2col_grad_X_col"]
         im2col_grad_X = tests["im2col_grad_X"]
-
         assert_allclose(
             cnn.im2col(im2col_input, 3, 3, 1, 1), im2col_output, atol=TOLERANCE
         )
@@ -83,7 +80,6 @@ class TestConvForward(unittest.TestCase):
             input_shape=(3, 32, 32), filter_shape=(1, 5, 5), rand_seed=seed
         )
         conv_out = conv_obj.forward(test_imgs, 1, 2)
-
         assert_allclose(conv_out, tests["conv_out"], atol=TOLERANCE)
 
 
@@ -126,7 +122,6 @@ class TestMaxPoolForward(unittest.TestCase):
         test_imgs = tests["conv_out"]
         max_obj = cnn.MaxPool((2, 2), 2)
         max_out = max_obj.forward(test_imgs)
-
         assert_allclose(max_out, tests["max_out"], atol=TOLERANCE)
 
 

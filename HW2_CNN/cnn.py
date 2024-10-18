@@ -24,7 +24,25 @@ def im2col(X, k_height, k_width, padding=1, stride=1):
     Note: You must implement im2col yourself. If you use any functions from im2col_helper, you will lose 50
     points on this assignment.
     """
-    pass
+    #padding x
+    pad_width=((0,0),(0,0),(padding,padding),(padding, padding))
+    X_padded=np.pad(X, pad_width=pad_width, mode='constant', constant_values=0)
+    X_shape=np.shape(X) #0:N, 1:C, 2:H, 3:W
+    output_H=(X_shape[2]-k_height+2*padding)//stride+1
+    output_W=(X_shape[3]-k_width+2*padding)//stride+1
+    counter=0
+    result=np.zeros((X_shape[1]*k_height*k_width,output_H*output_W*X_shape[0]))
+    for h in range (output_H):
+        for w in range (output_W):
+            for n in range (X_shape[0]):
+                curr_col=X_padded[n,:, (h*stride):(h*stride+k_height), (w*stride):(w*stride+k_width)]
+                reshapped_curr_col=curr_col.reshape(-1,)
+                result[:,counter]=reshapped_curr_col
+                counter+=1
+    return result
+
+
+
 
 
 def im2col_bw(grad_X_col, X_shape, k_height, k_width, padding=1, stride=1):
@@ -36,7 +54,22 @@ def im2col_bw(grad_X_col, X_shape, k_height, k_width, padding=1, stride=1):
     Note: You must implement im2col yourself. If you use any functions from im2col_helper, you will lose 50
     points on this assignment.
     """
-    pass
+    (orig_N, orig_C, orig_H, orig_W)=X_shape
+    output_H=(orig_H-k_height+2*padding)//stride+1
+    output_W=(orig_W-k_width+2*padding)//stride+1
+    result=np.zeros((orig_N, orig_C,orig_H+2*padding, orig_W+2*padding))
+    counter=0
+    for h in range (output_H):
+        for w in range (output_W):
+            for n in range (orig_N):
+                curr_conv=grad_X_col[:,counter].reshape(orig_C,k_height, k_width)
+                result[n,:,(h*stride):(h*stride+k_height), (w*stride):(w*stride+k_width)]+=curr_conv
+                counter+=1
+    res_H=result.shape[2]
+    res_W=result.shape[3]
+    return result[:,:,padding:res_H-padding, padding:res_W-padding]
+        
+
 
 
 class Transform:
@@ -78,13 +111,14 @@ class LeakyReLU(Transform):
     """
     Implement this class
     """
-    def __init__(self, alpha):
+    def __init__(self, alpha, dropout_probability=0.5):
         
         Transform.__init__(self)
-        #TODO
-        pass
+        self.alpha=alpha
+        self.dropout_probability=dropout_probability
+        self.dropout_mask=None
 
-    def forward(self, x, train=True):
+    def forward(self, x, train=False):
         """
         :param x: input matrix
         :param train: optional param indicating training
@@ -97,13 +131,24 @@ class LeakyReLU(Transform):
 
         Hint: you may find np.where useful for this.
         """
-        pass
+        self.orginal_x=x
+        self.leaky=np.where(x<0, self.alpha*x, x)
+        if train==True:
+            prob_drop=np.random.uniform(0,1, x.shape)
+            self.dropout_mask=np.where(prob_drop<self.dropout_probability, 0, 1)
+            self.leaky=self.leaky*self.dropout_mask
+        return self.leaky
+
 
     def backward(self, grad_wrt_out):
         """
         :param grad_wrt_out: gradient matrix from previous Transform
         """
-        pass
+        grad_leaky=np.where(self.orginal_x<=0, self.alpha, 1)
+        if self.dropout_mask is not None:
+            grad_leaky=grad_leaky*self.dropout_mask
+
+        return grad_leaky*grad_wrt_out
 
 class Flatten(Transform):
     """
@@ -114,14 +159,16 @@ class Flatten(Transform):
         """
         returns Flatten(x)
         """
-        pass
+        num_filters=np.shape(x)[0]
+        self.shape=np.shape(x)
+        return x.reshape(num_filters, -1)
 
     def backward(self, dloss):
         """
         dLoss is the gradients wrt the output of Flatten
         returns gradients wrt the input to Flatten
         """
-        pass
+        return dloss.reshape(self.shape)
 
 
 class Conv(Transform):
@@ -142,6 +189,17 @@ class Conv(Transform):
         self.C, self.H, self.Width = input_shape
         self.num_filters, self.k_height, self.k_width = filter_shape
         
+        b=np.sqrt(6.0/((self.num_filters+self.C)*self.k_height*self.k_width))
+        self.W=np.random.uniform(-b, b, (self.num_filters, self.C, self.k_height, self.k_width))
+        self.flatten=Flatten()
+        self.b=np.zeros((self.num_filters,1))
+
+
+        self.momen_W=np.zeros_like(self.W)
+        self.momen_b=np.zeros_like(self.b)
+
+        self.grad_W=np.zeros_like(self.W)
+        self.grad_b=np.zeros_like(self.b)
 
     def forward(self, inputs, stride=1, pad=2):
         """
@@ -150,7 +208,20 @@ class Conv(Transform):
         Return the output of convolution operation in shape (batch_size, num of filters, height, width)
         use im2col here to vectorize your computations
         """
-        pass
+        self.stride=stride
+        self.pad=pad
+        self.inputs=inputs
+        self.col_X=im2col_helper.im2col(inputs, self.k_height, self.k_width, pad, stride)
+        self.flatten_W=self.flatten.forward(self.W)
+        self.forward_res=self.flatten_W@self.col_X+self.b
+
+        (batch_size, _, height, width)=np.shape(inputs)
+        output_H=(height-self.k_height+2*pad)//stride+1
+        output_W=(width-self.k_width+2*pad)//stride+1
+        self.forward_res = self.forward_res.reshape(self.num_filters, output_H, output_W, batch_size)
+        self.forward_res = self.forward_res.transpose(3, 0, 1, 2)
+        return self.forward_res
+
 
     def backward(self, dloss):
         """
@@ -159,14 +230,27 @@ class Conv(Transform):
         Return [gradient wrt weights, gradient wrt biases, gradient wrt input to this layer]
         use im2col_bw here to vectorize your computations
         """
-        pass
+        reshaped_dout=(dloss.transpose(1,2,3,0)).reshape(self.W.shape[0], -1)
+        #compute the gradient for layer
+        #rearrange dloss so num of filters come first
+        self.grad_layers=self.flatten_W.T@reshaped_dout
+        self.grad_layers=im2col_helper.im2col_bw(self.grad_layers,np.shape(self.inputs), self.k_height, self.k_width, self.pad, self.stride)
+        # compute the gradient for weights
+        self.grad_W = reshaped_dout @ self.col_X.T
+        self.grad_W= self.grad_W.reshape(np.shape(self.W))
+        #compute the gradient for b
+        self.grad_b=np.sum(reshaped_dout,axis=1,keepdims=True)
+        return [self.grad_W, self.grad_b, self.grad_layers]
 
     def update(self, learning_rate=0.001, momentum_coeff=0.5):
         """
         Update weights and biases with gradients calculated by backward()
         Use the same momentum formula as in HW1 MLP
         """
-        pass
+        self.momen_W=momentum_coeff*self.momen_W+self.grad_W
+        self.momen_b=momentum_coeff*self.momen_b+self.grad_b
+        self.W=self.W-learning_rate*self.momen_W
+        self.b=self.b-learning_rate*self.momen_b
 
     def get_wb_conv(self):
         """
@@ -185,21 +269,65 @@ class MaxPool(Transform):
         filter_shape is (filter_height, filter_width)
         stride is a scalar
         """
-        pass
+        self.filter_height, self.filter_width=filter_shape
+        self.stride=stride
 
     def forward(self, inputs):
         """
         forward pass of MaxPool
         inputs: (N, C, H, W)
         """
-        pass
+        (N, C, H, W)=np.shape(inputs)
+        out_H=(H-self.filter_height)//self.stride+1
+        out_W=(W-self.filter_width)//self.stride+1
+        self.inputs=inputs
+        self.forward_res=np.zeros((N,C,out_H, out_W))
+        for h in range (out_H):
+            for w in range (out_W):
+                target=inputs[:,:,self.stride*h: self.stride*h+self.filter_height, self.stride*w:self.stride*w+self.filter_width]
+                max_target=np.max(target, axis=(2, 3), keepdims=True)
+                self.forward_res[:,:,h,w]=max_target.reshape(2,1)
+        return self.forward_res
+        
 
     def backward(self, dloss):
         """
         dloss is the gradients wrt the output of forward()
         """
-        pass
+        # expand dloss in forward_input shape, where element are zero if not max
+        (N, C, H, W)=np.shape(dloss)
+        backward_res=np.zeros_like(self.inputs) 
+        for h in range (H):
+            for w in range(W):
+                for n in range (N):
+                    for c in range (C):
+                        target=self.inputs[n,c,h*self.stride:(h*self.stride+self.filter_height),w*self.stride:(w*self.stride+self.filter_width)]
+                        max_index = np.unravel_index(np.argmax(target), (self.filter_height, self.filter_width))
+                        backward_region=backward_res[n,c,h*self.stride:(h*self.stride+self.filter_height),w*self.stride:(w*self.stride+self.filter_width)]
+                        backward_region[max_index] = dloss[n, c, h, w]
+                
+        return backward_res
+        
+        
+def random_weight_init(input, output):
+    """
+    Initializes random weight vector
 
+    :param input: input dimension
+    :param output: output dimension
+    :return: (output x input) matrix with random weights
+    """
+    b = np.sqrt(6) / np.sqrt(input + output)
+    return np.random.uniform(-b, b, (input, output))
+
+def zeros_bias_init(outd):
+    """
+    Initializes zero bias vector
+
+    :param output: output dimension
+    :return: (output x 1) matrix with zeros
+    """
+    return np.zeros((outd, 1))
 
 class LinearLayer(Transform):
     """
@@ -216,13 +344,25 @@ class LinearLayer(Transform):
         if rand_seed is not None:
             np.random.seed(rand_seed)
         
+        self.indim=indim
+        self.outdim=outdim
+        #weights_size(outdim, indim)
+        self.W=random_weight_init(indim, outdim)
+        self.b=zeros_bias_init(outdim)
+
+        self.grad_weights=np.zeros((indim, outdim))
+        self.grad_b=np.zeros((outdim,1))
+
+        self.momen_weights=np.zeros((indim, outdim))
+        self.momen_b=np.zeros((outdim,1))
 
     def forward(self, inputs):
         """
         Forward pass of linear layer
         inputs shape (batch_size, indim)
         """
-        pass
+        self.inputs=inputs
+        return inputs@self.W+self.b.T
 
     def backward(self, dloss):
         """
@@ -230,13 +370,19 @@ class LinearLayer(Transform):
         dloss shape (batch_size, outdim)
         Return [gradient wrt weights, gradient wrt biases, gradient wrt input to this layer]
         """
-        pass
+        self.grad_b=np.sum(dloss, axis=0, keepdims=True).T
+        self.grad_weights=(self.inputs).T @ dloss
+        self.grad_inputs = dloss@self.W.T
+        return [self.grad_weights, self.grad_b, self.grad_inputs]
 
     def update(self, learning_rate=0.001, momentum_coeff=0.5):
         """
         Similar to Conv.update()
         """
-        pass
+        self.momen_weights=momentum_coeff*self.momen_weights+self.grad_weights
+        self.momen_b=momentum_coeff*self.momen_b+self.grad_b
+        self.W=self.W-learning_rate*self.momen_weights
+        self.b=self.b-learning_rate*self.momen_b
 
     def get_wb_fc(self):
         """
