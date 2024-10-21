@@ -11,7 +11,7 @@ Sep 2024
 
 import numpy as np
 import im2col_helper  # uncomment this line if you wish to make use of the im2col_helper.pyc file for experiments
-
+import matplotlib.pyplot as plt
 def im2col(X, k_height, k_width, padding=1, stride=1):
     """
     Construct the im2col matrix of intput feature map X.
@@ -161,7 +161,9 @@ class Flatten(Transform):
         """
         num_filters=np.shape(x)[0]
         self.shape=np.shape(x)
-        return x.reshape(num_filters, -1)
+        res=x.reshape(num_filters, -1)
+        print(res.shape)
+        return res
 
     def backward(self, dloss):
         """
@@ -286,7 +288,8 @@ class MaxPool(Transform):
             for w in range (out_W):
                 target=inputs[:,:,self.stride*h: self.stride*h+self.filter_height, self.stride*w:self.stride*w+self.filter_width]
                 max_target=np.max(target, axis=(2, 3), keepdims=True)
-                self.forward_res[:,:,h,w]=max_target.reshape(2,1)
+                self.forward_res[:,:,h,w]=max_target.reshape(N,C)
+        print(self.forward_res.shape)
         return self.forward_res
         
 
@@ -404,20 +407,39 @@ class SoftMaxCrossEntropyLoss:
         returns loss as scalar
         (your loss should be the mean loss over the batch)
         """
-        pass
+        exp_logits=np.exp(logits)
+        denominator=np.sum(exp_logits, axis=1, keepdims=True)
+        soft_max=exp_logits/denominator
+        log_soft_max=np.log(soft_max)
+
+        self.batch_size=np.shape(logits)[0]
+    
+        loss=-np.sum(log_soft_max*labels)/self.batch_size
+        self.softmax=soft_max
+        self.labels=labels
+        return loss
 
     def backward(self):
         """
         return shape (batch_size, num_classes)
         Remeber to divide by batch_size so the gradients correspond to the mean loss
         """
-        pass
+        self.grad_logit=(self.softmax-self.labels)/self.batch_size
+        return self.grad_logit
 
     def getAccu(self):
         """
         Implement as you wish, not autograded.
         """
-        pass
+
+        prediction=np.zeros_like(self.softmax)
+        max_indices = np.argmax(self.softmax, axis=1)
+        prediction[np.arange(np.shape(self.softmax)[0]), max_indices]=1
+        num_corrects=np.sum(prediction*self.labels)
+        accuracy=num_corrects/self.batch_size
+
+        return accuracy,prediction
+
 
 
 class ConvNet:
@@ -438,7 +460,16 @@ class ConvNet:
         Remember to pass in the rand_seed to initialize all layers,
         otherwise you may not pass autograder.
         """
-        pass
+        self.input_shape=(3,32,32)
+        self.conv_Filter_shape=(1,4,4)
+        self.pool_Filter_shape=(2,2)
+        self.stride=2
+        self.convLayer=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer=MaxPool(self.pool_Filter_shape, self.stride)
+        self.flattenLayer=Flatten()
+        self.linearLayer=LinearLayer(256, 10, rand_seed=rand_seed)
+        self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
         """
@@ -448,7 +479,15 @@ class ConvNet:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
-        pass
+        forward_res=self.convLayer.forward(inputs)
+        forward_res=self.leakyLayer.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer.forward(forward_res)
+        forward_res=self.flattenLayer.forward(forward_res)
+        forward_res=self.linearLayer.forward(forward_res)
+        loss=self.softMaxLayer.forward(forward_res, y_labels)
+        (_,prediction)=self.softMaxLayer.getAccu()
+        return (loss,prediction)
+        
 
     def backward(self):
         """
@@ -456,7 +495,13 @@ class ConvNet:
         Hint: Make sure you access the right values returned from the forward function
         DO NOT return anything from this function
         """
-        pass
+        grad_logit=self.softMaxLayer.backward()
+        grad_weights, grad_b, grad_inputs=self.linearLayer.backward(grad_logit)
+        backward_res=self.flattenLayer.backward(grad_inputs)
+        backward_res=self.maxPoolLayer.backward(backward_res)
+        backward_res=self.leakyLayer.backward(backward_res)
+        backward_res=self.convLayer.backward(backward_res)
+
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -465,7 +510,9 @@ class ConvNet:
         1. learning_rate
         2. momentum_coefficient
         """
-        pass
+        self.linearLayer.update(learning_rate, momentum_coeff)
+        self.convLayer.update(learning_rate, momentum_coeff)
+
 
 
 class ConvNetTwo:
@@ -484,7 +531,16 @@ class ConvNetTwo:
         then initialize linear layer with output 10 neurons
         Initialize SotMaxCrossEntropy object
         """
-        pass
+        self.input_shape=(3,32,32)
+        self.conv_Filter_shape=(5,4,4)
+        self.pool_Filter_shape=(2,2)
+        self.stride=2
+        self.convLayer=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer=MaxPool(self.pool_Filter_shape, self.stride)
+        self.flattenLayer=Flatten()
+        self.linearLayer=LinearLayer(1280, 10, rand_seed=rand_seed)
+        self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
         """
@@ -494,7 +550,14 @@ class ConvNetTwo:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
-        pass
+        forward_res=self.convLayer.forward(inputs)
+        forward_res=self.leakyLayer.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer.forward(forward_res)
+        forward_res=self.flattenLayer.forward(forward_res)
+        forward_res=self.linearLayer.forward(forward_res)
+        loss=self.softMaxLayer.forward(forward_res, y_labels)
+        (_,prediction)=self.softMaxLayer.getAccu()
+        return (loss,prediction)
 
     def backward(self):
         """
@@ -502,7 +565,12 @@ class ConvNetTwo:
         Hint: Make sure you access the right values returned from the forward function
         DO NOT return anything from this function
         """
-        pass
+        grad_logit=self.softMaxLayer.backward()
+        grad_weights, grad_b, grad_inputs=self.linearLayer.backward(grad_logit)
+        backward_res=self.flattenLayer.backward(grad_inputs)
+        backward_res=self.maxPoolLayer.backward(backward_res)
+        backward_res=self.leakyLayer.backward(backward_res)
+        backward_res=self.convLayer.backward(backward_res)
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -511,7 +579,8 @@ class ConvNetTwo:
         1. learning_rate
         2. momentum_coefficient
         """
-        pass
+        self.linearLayer.update(learning_rate, momentum_coeff)
+        self.convLayer.update(learning_rate, momentum_coeff)
 
 
 class ConvNetThree:
@@ -533,7 +602,22 @@ class ConvNetThree:
         then initialize linear layer with output 10 neurons
         Initialize SotMaxCrossEntropy object
         """
-        pass
+        self.input_shape=(3,32,32)
+        self.conv_Filter_shape=(1,4,4)
+        self.pool_Filter_shape=(2,2)
+        self.stride=2
+
+        self.convLayer1=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer1=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer1=MaxPool(self.pool_Filter_shape, self.stride)
+
+        self.convLayer2=Conv((1,16,16), self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer2=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer2=MaxPool(self.pool_Filter_shape, self.stride)
+        
+        self.flattenLayer=Flatten()
+        self.linearLayer=LinearLayer(64, 10, rand_seed=rand_seed)
+        self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
         """
@@ -543,7 +627,19 @@ class ConvNetThree:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
-        pass
+        forward_res=self.convLayer1.forward(inputs)
+        forward_res=self.leakyLayer1.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer1.forward(forward_res)
+
+        forward_res=self.convLayer2.forward(forward_res)
+        forward_res=self.leakyLayer2.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer2.forward(forward_res)
+
+        forward_res=self.flattenLayer.forward(forward_res)
+        forward_res=self.linearLayer.forward(forward_res)
+        loss=self.softMaxLayer.forward(forward_res, y_labels)
+        (_,prediction)=self.softMaxLayer.getAccu()
+        return (loss,prediction)
 
     def backward(self):
         """
@@ -551,7 +647,15 @@ class ConvNetThree:
         Hint: Make sure you access the right values returned from the forward function
         DO NOT return anything from this function
         """
-        pass
+        grad_logit=self.softMaxLayer.backward()
+        grad_weights, grad_b, grad_inputs=self.linearLayer.backward(grad_logit)
+        backward_res=self.flattenLayer.backward(grad_inputs)
+        backward_res=self.maxPoolLayer2.backward(backward_res)
+        backward_res=self.leakyLayer2.backward(backward_res)
+        backward_res=self.convLayer2.backward(backward_res)
+        backward_res=self.maxPoolLayer1.backward(backward_res)
+        backward_res=self.leakyLayer1.backward(backward_res)
+        backward_res=self.convLayer1.backward(backward_res)
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -560,7 +664,9 @@ class ConvNetThree:
         1. learning_rate
         2. momentum_coefficient
         """
-        pass
+        self.linearLayer.update(learning_rate, momentum_coeff)
+        self.convLayer1.update(learning_rate, momentum_coeff)
+        self.convLayer2.update(learning_rate, momentum_coeff)
 
 
 
@@ -583,7 +689,22 @@ class ConvNetFour:
         then initialize linear layer with output 10 neurons
         Initialize SotMaxCrossEntropy object
         """
-        pass
+        self.input_shape=(3,32,32)
+        self.conv_Filter_shape=(5,4,4)
+        self.pool_Filter_shape=(2,2)
+        self.stride=2
+
+        self.convLayer1=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer1=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer1=MaxPool(self.pool_Filter_shape, self.stride)
+
+        self.convLayer2=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer2=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer2=MaxPool(self.pool_Filter_shape, self.stride)
+        
+        self.flattenLayer=Flatten()
+        self.linearLayer=LinearLayer(256, 10, rand_seed=rand_seed)
+        self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
         """
@@ -593,7 +714,19 @@ class ConvNetFour:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
-        pass
+        forward_res=self.convLayer1.forward(inputs)
+        forward_res=self.leakyLayer1.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer1.forward(forward_res)
+
+        forward_res=self.convLayer2.forward(forward_res)
+        forward_res=self.leakyLayer2.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer2.forward(forward_res)
+
+        forward_res=self.flattenLayer.forward(forward_res)
+        forward_res=self.linearLayer.forward(forward_res)
+        loss=self.softMaxLayer.forward(forward_res, y_labels)
+        (_,prediction)=self.softMaxLayer.getAccu()
+        return (loss,prediction)
 
     def backward(self):
         """
@@ -601,7 +734,15 @@ class ConvNetFour:
         Hint: Make sure you access the right values returned from the forward function
         DO NOT return anything from this function
         """
-        pass
+        grad_logit=self.softMaxLayer.backward()
+        grad_weights, grad_b, grad_inputs=self.linearLayer.backward(grad_logit)
+        backward_res=self.flattenLayer.backward(grad_inputs)
+        backward_res=self.maxPoolLayer2.backward(backward_res)
+        backward_res=self.leakyLayer2.backward(backward_res)
+        backward_res=self.convLayer2.backward(backward_res)
+        backward_res=self.maxPoolLayer1.backward(backward_res)
+        backward_res=self.leakyLayer1.backward(backward_res)
+        backward_res=self.convLayer1.backward(backward_res)
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -610,7 +751,9 @@ class ConvNetFour:
         1. learning_rate
         2. momentum_coefficient
         """
-        pass
+        self.linearLayer.update(learning_rate, momentum_coeff)
+        self.convLayer1.update(learning_rate, momentum_coeff)
+        self.convLayer2.update(learning_rate, momentum_coeff)
     
 
 class ConvNetFive:
@@ -626,14 +769,34 @@ class ConvNetFive:
         Conv of input shape 3x32x32 with filter size of 7x3x3
         then apply LeakyRelu
         then perform MaxPooling with a 2x2 filter of stride 2
+
         then Conv with filter size of 7x3x3
         then apply LeakyRelu
+
         then Conv with filter size of 7x3x3
         then apply LeakyRelu
+
         then initialize linear layer with output 10 neurons
         Initialize SotMaxCrossEntropy object
         """
-        pass
+        self.input_shape=(3,32,32)
+        self.conv_Filter_shape=(7,3,3)
+        self.pool_Filter_shape=(2,2)
+        self.stride=2
+
+        self.convLayer1=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer1=LeakyReLU(alpha=leakyReluAlpha)
+        self.maxPoolLayer1=MaxPool(self.pool_Filter_shape, self.stride)
+
+        self.convLayer2=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer2=LeakyReLU(alpha=leakyReluAlpha)
+
+        self.convLayer3=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.leakyLayer3=LeakyReLU(alpha=leakyReluAlpha)
+        
+        self.flattenLayer=Flatten()
+        self.linearLayer=LinearLayer(256, 10, rand_seed=rand_seed)
+        self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
         """
@@ -643,7 +806,21 @@ class ConvNetFive:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
-        pass
+        forward_res=self.convLayer1.forward(inputs)
+        forward_res=self.leakyLayer1.forward(forward_res, train=False)
+        forward_res=self.maxPoolLayer1.forward(forward_res)
+
+        forward_res=self.convLayer2.forward(forward_res)
+        forward_res=self.leakyLayer2.forward(forward_res, train=False)
+
+        forward_res=self.convLayer3.forward(forward_res)
+        forward_res=self.leakyLayer3.forward(forward_res, train=False)
+
+        forward_res=self.flattenLayer.forward(forward_res)
+        forward_res=self.linearLayer.forward(forward_res)
+        loss=self.softMaxLayer.forward(forward_res, y_labels)
+        (_,prediction)=self.softMaxLayer.getAccu()
+        return (loss,prediction)
 
     def backward(self):
         """
@@ -651,7 +828,20 @@ class ConvNetFive:
         Hint: Make sure you access the right values returned from the forward function
         DO NOT return anything from this function
         """
-        pass
+        grad_logit=self.softMaxLayer.backward()
+        grad_weights, grad_b, grad_inputs=self.linearLayer.backward(grad_logit)
+        backward_res=self.flattenLayer.backward(grad_inputs)
+
+
+        backward_res=self.leakyLayer3.backward(backward_res)
+        backward_res=self.convLayer3.backward(backward_res)
+
+        backward_res=self.leakyLayer2.backward(backward_res)
+        backward_res=self.convLayer2.backward(backward_res)
+        
+        backward_res=self.maxPoolLayer1.backward(backward_res)
+        backward_res=self.leakyLayer1.backward(backward_res)
+        backward_res=self.convLayer1.backward(backward_res)
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -660,7 +850,10 @@ class ConvNetFive:
         1. learning_rate
         2. momentum_coefficient
         """
-        pass
+        self.linearLayer.update(learning_rate, momentum_coeff)
+        self.convLayer1.update(learning_rate, momentum_coeff)
+        self.convLayer2.update(learning_rate, momentum_coeff)
+        self.convLayer3.update(learning_rate, momentum_coeff)
 
 def labels2onehot(labels):
     return np.eye(np.max(labels) + 1)[labels].astype(np.float32)
@@ -677,7 +870,7 @@ if __name__ == "__main__":
 
     # change this to where you downloaded the file,
     # usually ends with 'cifar10-subset.pkl'
-    CIFAR_FILENAME = "../cifar10-subset.pkl"
+    CIFAR_FILENAME = "cifar10-subset.pkl"
     with open(CIFAR_FILENAME, "rb") as f:
         data = pickle.load(f)
 
@@ -686,3 +879,107 @@ if __name__ == "__main__":
     trainy = labels2onehot(data["trainy"])
     testX = data["testX"].reshape(-1, 3, 32, 32) / 255.0
     testy = labels2onehot(data["testy"])
+
+
+
+    def getLossAndAccuracy(model, x, y):
+        loss,prediction=model.forward(x, y)
+        num_corrects=np.sum(prediction*y)
+        accuracy=num_corrects/np.shape(y)[0]
+        print(accuracy)
+        return loss, accuracy
+
+
+    #Define models
+    # model1=ConvNet(rand_seed=None,leakyReluAlpha=0.05)
+    model2=ConvNetTwo(rand_seed=None, leakyReluAlpha=0.05)
+    model3=ConvNetThree(rand_seed=None, leakyReluAlpha=0.05)
+    model4=ConvNetFour(rand_seed=None, leakyReluAlpha=0.05)
+
+    batch_size=32
+    num_batches=np.shape(trainX)[0]//batch_size
+    epochs=50
+    indim=np.shape(trainX)[1]
+    def training_loop(model):
+            train_losses=[]
+            test_losses=[]
+            train_accuracies=[]
+            test_accuracies=[]
+            for i in range(epochs):
+                train_size=np.shape(trainX)[0]
+                randomized_indices=np.random.permutation(train_size)
+                shuffled_x=trainX[randomized_indices]
+                shuffled_y=trainy[randomized_indices]
+                for j in range(num_batches):
+                    curr_x_batch=shuffled_x[j*batch_size:(j+1)*batch_size,:,:,:]
+                    curr_y_batch=shuffled_y[j*batch_size:(j+1)*batch_size,:]
+                    #Forward pass
+                    loss, y_pred=model.forward(curr_x_batch, curr_y_batch)
+                    model.backward()
+                    model.update(0.001, 0.9)   
+                (train_loss, train_accuracy)=getLossAndAccuracy(model, trainX, trainy )
+                (test_loss, test_accuracy)=getLossAndAccuracy(model, testX, testy)
+                train_losses.append(train_loss)
+                train_accuracies.append(train_accuracy)
+                test_losses.append(test_loss)
+                test_accuracies.append(test_accuracy)
+            return train_losses, test_losses, train_accuracies, test_accuracies
+    
+    # train_losses1, test_losses1, train_accuracies1, test_accuracies1=training_loop(model1)
+    # plt.figure()
+    # plt.plot(np.arange(50), train_losses1, label='Train Loss')
+    # plt.plot(np.arange(50), test_losses1, label='Test Loss')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Loss')
+    # plt.title('ConvNet Loss over Batches')
+    # plt.legend()
+    # plt.savefig('ConvNet_Loss.png')
+
+    # plt.figure()
+    # plt.plot(np.arange(50), train_accuracies1, label='Train Accuracy')
+    # plt.plot(np.arange(50), test_accuracies1, label='Test Accuracy')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Accuracy')
+    # plt.title('ConvNet Accuraccy over Batches')
+    # plt.legend()
+    # plt.savefig('ConvNet_Accuracy.png')
+
+
+    # train_losses2, test_losses2, train_accuracies2, test_accuracies2=training_loop(model2)
+    # plt.figure()
+    # plt.plot(np.arange(50), train_losses2, label='Train Loss')
+    # plt.plot(np.arange(50), test_losses2, label='Test Loss')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Loss')
+    # plt.title('ConvNetTwo Loss over Batches')
+    # plt.legend()
+    # plt.savefig('ConvNetTwo_Loss.png')
+
+    # plt.figure()
+    # plt.plot(np.arange(50), train_accuracies2, label='Train Accuracy')
+    # plt.plot(np.arange(50), test_accuracies2, label='Test Accuracy')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Accuracy')
+    # plt.title('ConvNetTwo Accuraccy over Batches')
+    # plt.legend()
+    # plt.savefig('ConvNetTwo_Accuracy.png')
+
+
+    train_losses3, test_losses3, train_accuracies3, test_accuracies3=training_loop(model3)
+    plt.figure()
+    plt.plot(np.arange(50), train_losses3, label='Train Loss')
+    plt.plot(np.arange(50), test_losses3, label='Test Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('ConvNetThree Loss over Batches')
+    plt.legend()
+    plt.savefig('ConvNetThree_Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(50), train_accuracies3, label='Train Accuracy')
+    plt.plot(np.arange(50), test_accuracies3, label='Test Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('ConvNetThree Accuraccy over Batches')
+    plt.legend()
+    plt.savefig('ConvNetThree_Accuracy.png')

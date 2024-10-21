@@ -185,14 +185,12 @@ class TestLinearUpdate(unittest.TestCase):
         assert_allclose(w, tests["linear_updated_w"], atol=TOLERANCE)
         assert_allclose(b, tests["linear_updated_b"], atol=TOLERANCE)
 
-
 # 4pts
 class TestConvNet(unittest.TestCase):
     def test(self):
         test_imgs = tests["test_imgs"]
         labels = tests["true_labels"]
         conv = cnn.ConvNet(rand_seed=0)
-
         for i in range(10):
             loss, y_pred = conv.forward(test_imgs, labels)
             total_loss = np.sum(loss / labels.shape[0])
