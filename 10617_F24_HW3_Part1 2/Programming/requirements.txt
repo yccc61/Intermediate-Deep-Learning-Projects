@@ -1,0 +1,7 @@
+gradescope-utils>=0.2.7
+subprocess32
+matplotlib
+argparse
+tqdm
+torch==1.11.0
+numpy<2.0.0

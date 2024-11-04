@@ -1,0 +1,4 @@
+Best Train Loss ConvNet4:1.4061418643008952
+Best Test Loss ConvNet4:1.5742958094070827
+Best Train Accuracy ConvNet4:0.4992
+Best Test Accuracy ConvNet4:0.4425

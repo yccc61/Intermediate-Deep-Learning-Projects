@@ -162,7 +162,6 @@ class Flatten(Transform):
         num_filters=np.shape(x)[0]
         self.shape=np.shape(x)
         res=x.reshape(num_filters, -1)
-        print(res.shape)
         return res
 
     def backward(self, dloss):
@@ -289,7 +288,6 @@ class MaxPool(Transform):
                 target=inputs[:,:,self.stride*h: self.stride*h+self.filter_height, self.stride*w:self.stride*w+self.filter_width]
                 max_target=np.max(target, axis=(2, 3), keepdims=True)
                 self.forward_res[:,:,h,w]=max_target.reshape(N,C)
-        print(self.forward_res.shape)
         return self.forward_res
         
 
@@ -479,6 +477,7 @@ class ConvNet:
         2. labels => true labels of shape (batch_size, num_classes)
         Return loss and predicted labels after one forward pass
         """
+        
         forward_res=self.convLayer.forward(inputs)
         forward_res=self.leakyLayer.forward(forward_res, train=False)
         forward_res=self.maxPoolLayer.forward(forward_res)
@@ -630,7 +629,6 @@ class ConvNetThree:
         forward_res=self.convLayer1.forward(inputs)
         forward_res=self.leakyLayer1.forward(forward_res, train=False)
         forward_res=self.maxPoolLayer1.forward(forward_res)
-
         forward_res=self.convLayer2.forward(forward_res)
         forward_res=self.leakyLayer2.forward(forward_res, train=False)
         forward_res=self.maxPoolLayer2.forward(forward_res)
@@ -652,10 +650,10 @@ class ConvNetThree:
         backward_res=self.flattenLayer.backward(grad_inputs)
         backward_res=self.maxPoolLayer2.backward(backward_res)
         backward_res=self.leakyLayer2.backward(backward_res)
-        backward_res=self.convLayer2.backward(backward_res)
+        _, _, backward_res=self.convLayer2.backward(backward_res)
         backward_res=self.maxPoolLayer1.backward(backward_res)
         backward_res=self.leakyLayer1.backward(backward_res)
-        backward_res=self.convLayer1.backward(backward_res)
+        _, _, backward_res=self.convLayer1.backward(backward_res)
 
     def update(self, learning_rate, momentum_coeff):
         """
@@ -697,13 +695,12 @@ class ConvNetFour:
         self.convLayer1=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
         self.leakyLayer1=LeakyReLU(alpha=leakyReluAlpha)
         self.maxPoolLayer1=MaxPool(self.pool_Filter_shape, self.stride)
-
-        self.convLayer2=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.convLayer2=Conv((5,16,16), self.conv_Filter_shape,rand_seed=rand_seed)
         self.leakyLayer2=LeakyReLU(alpha=leakyReluAlpha)
         self.maxPoolLayer2=MaxPool(self.pool_Filter_shape, self.stride)
         
         self.flattenLayer=Flatten()
-        self.linearLayer=LinearLayer(256, 10, rand_seed=rand_seed)
+        self.linearLayer=LinearLayer(320, 10, rand_seed=rand_seed)
         self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
@@ -739,7 +736,7 @@ class ConvNetFour:
         backward_res=self.flattenLayer.backward(grad_inputs)
         backward_res=self.maxPoolLayer2.backward(backward_res)
         backward_res=self.leakyLayer2.backward(backward_res)
-        backward_res=self.convLayer2.backward(backward_res)
+        _, _, backward_res=self.convLayer2.backward(backward_res)
         backward_res=self.maxPoolLayer1.backward(backward_res)
         backward_res=self.leakyLayer1.backward(backward_res)
         backward_res=self.convLayer1.backward(backward_res)
@@ -788,14 +785,14 @@ class ConvNetFive:
         self.leakyLayer1=LeakyReLU(alpha=leakyReluAlpha)
         self.maxPoolLayer1=MaxPool(self.pool_Filter_shape, self.stride)
 
-        self.convLayer2=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.convLayer2=Conv((7,17,17), self.conv_Filter_shape,rand_seed=rand_seed)
         self.leakyLayer2=LeakyReLU(alpha=leakyReluAlpha)
 
-        self.convLayer3=Conv(self.input_shape, self.conv_Filter_shape,rand_seed=rand_seed)
+        self.convLayer3=Conv((7,19,19), self.conv_Filter_shape,rand_seed=rand_seed)
         self.leakyLayer3=LeakyReLU(alpha=leakyReluAlpha)
         
         self.flattenLayer=Flatten()
-        self.linearLayer=LinearLayer(256, 10, rand_seed=rand_seed)
+        self.linearLayer=LinearLayer(7*21*21, 10, rand_seed=rand_seed)
         self.softMaxLayer=SoftMaxCrossEntropyLoss()
 
     def forward(self, inputs, y_labels):
@@ -834,10 +831,10 @@ class ConvNetFive:
 
 
         backward_res=self.leakyLayer3.backward(backward_res)
-        backward_res=self.convLayer3.backward(backward_res)
+        _,_,backward_res=self.convLayer3.backward(backward_res)
 
         backward_res=self.leakyLayer2.backward(backward_res)
-        backward_res=self.convLayer2.backward(backward_res)
+        _,_,backward_res=self.convLayer2.backward(backward_res)
         
         backward_res=self.maxPoolLayer1.backward(backward_res)
         backward_res=self.leakyLayer1.backward(backward_res)
@@ -886,15 +883,15 @@ if __name__ == "__main__":
         loss,prediction=model.forward(x, y)
         num_corrects=np.sum(prediction*y)
         accuracy=num_corrects/np.shape(y)[0]
-        print(accuracy)
         return loss, accuracy
 
 
     #Define models
-    # model1=ConvNet(rand_seed=None,leakyReluAlpha=0.05)
+    model1=ConvNet(rand_seed=None,leakyReluAlpha=0.05)
     model2=ConvNetTwo(rand_seed=None, leakyReluAlpha=0.05)
     model3=ConvNetThree(rand_seed=None, leakyReluAlpha=0.05)
     model4=ConvNetFour(rand_seed=None, leakyReluAlpha=0.05)
+    model5=ConvNetFive(rand_seed=None, leakyReluAlpha=0.05)
 
     batch_size=32
     num_batches=np.shape(trainX)[0]//batch_size
@@ -919,50 +916,54 @@ if __name__ == "__main__":
                     model.update(0.001, 0.9)   
                 (train_loss, train_accuracy)=getLossAndAccuracy(model, trainX, trainy )
                 (test_loss, test_accuracy)=getLossAndAccuracy(model, testX, testy)
+                print("train_loss", train_loss)
+                print("test_loss", test_loss)
+                print("train_accuracy",train_accuracy)
+                print("test_accuracy", test_accuracy)
                 train_losses.append(train_loss)
                 train_accuracies.append(train_accuracy)
                 test_losses.append(test_loss)
                 test_accuracies.append(test_accuracy)
             return train_losses, test_losses, train_accuracies, test_accuracies
     
-    # train_losses1, test_losses1, train_accuracies1, test_accuracies1=training_loop(model1)
-    # plt.figure()
-    # plt.plot(np.arange(50), train_losses1, label='Train Loss')
-    # plt.plot(np.arange(50), test_losses1, label='Test Loss')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Loss')
-    # plt.title('ConvNet Loss over Batches')
-    # plt.legend()
-    # plt.savefig('ConvNet_Loss.png')
+    train_losses1, test_losses1, train_accuracies1, test_accuracies1=training_loop(model1)
+    plt.figure()
+    plt.plot(np.arange(50), train_losses1, label='Train Loss')
+    plt.plot(np.arange(50), test_losses1, label='Test Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('ConvNet Loss over Batches')
+    plt.legend()
+    plt.savefig('ConvNet_Loss.png')
 
-    # plt.figure()
-    # plt.plot(np.arange(50), train_accuracies1, label='Train Accuracy')
-    # plt.plot(np.arange(50), test_accuracies1, label='Test Accuracy')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Accuracy')
-    # plt.title('ConvNet Accuraccy over Batches')
-    # plt.legend()
-    # plt.savefig('ConvNet_Accuracy.png')
+    plt.figure()
+    plt.plot(np.arange(50), train_accuracies1, label='Train Accuracy')
+    plt.plot(np.arange(50), test_accuracies1, label='Test Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('ConvNet Accuraccy over Batches')
+    plt.legend()
+    plt.savefig('ConvNet_Accuracy.png')
 
 
-    # train_losses2, test_losses2, train_accuracies2, test_accuracies2=training_loop(model2)
-    # plt.figure()
-    # plt.plot(np.arange(50), train_losses2, label='Train Loss')
-    # plt.plot(np.arange(50), test_losses2, label='Test Loss')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Loss')
-    # plt.title('ConvNetTwo Loss over Batches')
-    # plt.legend()
-    # plt.savefig('ConvNetTwo_Loss.png')
+    train_losses2, test_losses2, train_accuracies2, test_accuracies2=training_loop(model2)
+    plt.figure()
+    plt.plot(np.arange(50), train_losses2, label='Train Loss')
+    plt.plot(np.arange(50), test_losses2, label='Test Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('ConvNetTwo Loss over Batches')
+    plt.legend()
+    plt.savefig('ConvNetTwo_Loss.png')
 
-    # plt.figure()
-    # plt.plot(np.arange(50), train_accuracies2, label='Train Accuracy')
-    # plt.plot(np.arange(50), test_accuracies2, label='Test Accuracy')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Accuracy')
-    # plt.title('ConvNetTwo Accuraccy over Batches')
-    # plt.legend()
-    # plt.savefig('ConvNetTwo_Accuracy.png')
+    plt.figure()
+    plt.plot(np.arange(50), train_accuracies2, label='Train Accuracy')
+    plt.plot(np.arange(50), test_accuracies2, label='Test Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('ConvNetTwo Accuraccy over Batches')
+    plt.legend()
+    plt.savefig('ConvNetTwo_Accuracy.png')
 
 
     train_losses3, test_losses3, train_accuracies3, test_accuracies3=training_loop(model3)
@@ -983,3 +984,67 @@ if __name__ == "__main__":
     plt.title('ConvNetThree Accuraccy over Batches')
     plt.legend()
     plt.savefig('ConvNetThree_Accuracy.png')
+
+    train_losses4, test_losses4, train_accuracies4, test_accuracies4=training_loop(model4)
+    plt.figure()
+    plt.plot(np.arange(50), train_losses4, label='Train Loss')
+    plt.plot(np.arange(50), test_losses4, label='Test Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('ConvNetFour Loss over Batches')
+    plt.legend()
+    plt.savefig('ConvNetFour_Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(50), train_accuracies4, label='Train Accuracy')
+    plt.plot(np.arange(50), test_accuracies4, label='Test Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('ConvNetFour Accuraccy over Batches')
+    plt.legend()
+    plt.savefig('ConvNetFour_Accuracy.png')
+
+    train_losses5, test_losses5, train_accuracies5, test_accuracies5=training_loop(model5)
+    plt.figure()
+    plt.plot(np.arange(50), train_losses5, label='Train Loss')
+    plt.plot(np.arange(50), test_losses5, label='Test Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('ConvNetFive Loss over Batches')
+    plt.legend()
+    plt.savefig('ConvNetFive_Loss.png')
+
+    plt.figure()
+    plt.plot(np.arange(50), train_accuracies5, label='Train Accuracy')
+    plt.plot(np.arange(50), test_accuracies5, label='Test Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('ConvNetFive Accuraccy over Batches')
+    plt.legend()
+    plt.savefig('ConvNetFive_Accuracy.png')
+
+    with open("output.txt", "w") as file:
+        file.write("Best Train Loss ConvNet1:" + str(min(train_losses1))+"\n")
+        file.write("Best Test Loss ConvNet1:" + str(min(test_losses1))+"\n")
+        file.write("Best Train Accuracy ConvNet1:" + str(max(train_accuracies1))+"\n")
+        file.write("Best Test Accuracy ConvNet1:" + str(max(test_accuracies1))+"\n")
+
+        file.write("Best Train Loss ConvNet2:" + str(min(train_losses2))+"\n")
+        file.write("Best Test Loss ConvNet2:" + str(min(test_losses2))+"\n")
+        file.write("Best Train Accuracy ConvNet2:" + str(max(train_accuracies2))+"\n")
+        file.write("Best Test Accuracy ConvNet2:" + str(max(test_accuracies2))+"\n")
+
+        file.write("Best Train Loss ConvNet3:" + str(min(train_losses3))+"\n")
+        file.write("Best Test Loss ConvNet3:" + str(min(test_losses3))+"\n")
+        file.write("Best Train Accuracy ConvNet3:" + str(max(train_accuracies3))+"\n")
+        file.write("Best Test Accuracy ConvNet3:" + str(max(test_accuracies3))+"\n")
+
+        file.write("Best Train Loss ConvNet4:" + str(min(train_losses4))+"\n")
+        file.write("Best Test Loss ConvNet4:" + str(min(test_losses4))+"\n")
+        file.write("Best Train Accuracy ConvNet4:" + str(max(train_accuracies4))+"\n")
+        file.write("Best Test Accuracy ConvNet4:" + str(max(test_accuracies4))+"\n")
+
+        file.write("Best Train Loss ConvNet5:" + str(min(train_losses5))+"\n")
+        file.write("Best Test Loss ConvNet5:" + str(min(test_losses5))+"\n")
+        file.write("Best Train Accuracy ConvNet5:" + str(max(train_accuracies5))+"\n")
+        file.write("Best Test Accuracy ConvNet5:" + str(max(test_accuracies5))+"\n")
