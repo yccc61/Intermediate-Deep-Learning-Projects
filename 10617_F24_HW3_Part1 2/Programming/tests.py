@@ -108,8 +108,7 @@ class TestBleuScore(unittest.TestCase):
 
     def test(self):
         target = [0, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3796, 3796]
-        predicted = [0, 2, 3, 4, 5, 6, 10, 11, 12, 1, 3796, 3796]
-
+        predicted = [0, 2, 3, 4, 5, 6, 10, 11, 12, 1, 3796, 3796]     
         for n in range(1, 5):
             assert_allclose(transformer.bleu_score(predicted, target, N=n), TESTS[5][n-1], atol=TOLERANCE)
 

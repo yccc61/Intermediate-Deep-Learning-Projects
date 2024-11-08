@@ -13,6 +13,7 @@ from torch.nn import Module, Linear, Softmax, ReLU, LayerNorm, ModuleList, Dropo
 from torch.optim import Adam
 import math
 
+import heapq
 class PositionalEncodingLayer(Module):
 
     def __init__(self, embedding_dim: int) -> None:
@@ -33,7 +34,15 @@ class PositionalEncodingLayer(Module):
 
         The output will have shape (batch_size, sequence_length, embedding_dim)
         """
-        raise NotImplementedError()
+        T,d=X.shape[1],X.shape[2]
+        pos=torch.arange(T)
+        result=torch.zeros_like(X)
+        for pos in range (T):
+            for i in range (d//2):
+                result[:, pos, 2*i]=np.sin(pos/(10000**(2*i/d)))
+                result[:, pos, 2*i+1]=np.cos(pos/(10000**((2*i)/d)))
+        sum=X+result
+        return sum
 
 
 class SelfAttentionLayer(Module):
@@ -67,7 +76,17 @@ class SelfAttentionLayer(Module):
             - torch.bmm (https://pytorch.org/docs/stable/generated/torch.bmm.html)
             - torch.Tensor.masked_fill (https://pytorch.org/docs/stable/generated/torch.Tensor.masked_fill.html)
         """
-        raise NotImplementedError()
+        dk=self.out_dim
+        outputQ=self.linear_Q(query_X)
+        outputK=self.linear_K(key_X)
+        outputV=self.linear_V(value_X)
+        attention_weights=torch.bmm(outputQ, outputK.transpose(1,2))
+        if mask!=None:
+            transformed_mask=(mask-1).abs().bool()
+            attention_weights=attention_weights.masked_fill(transformed_mask, float(-1e32))
+        attention_weights=self.softmax(attention_weights/np.sqrt(dk))
+        attention_output=attention_weights@outputV
+        return (attention_output,attention_weights)
 
 class MultiHeadedAttentionLayer(Module):
 
@@ -241,7 +260,9 @@ class Decoder(Module):
         Hint: The function torch.tril (https://pytorch.org/docs/stable/generated/torch.tril.html)
         may be useful.
         """
-        raise NotImplementedError()
+        mask=torch.ones(seq_length, seq_length)
+        mask=torch.tril(mask)
+        return mask
 
 
     def forward(self, encoded_source: torch.Tensor, source_padding: torch.Tensor,
@@ -314,15 +335,38 @@ class Transformer(Module):
             - torch.softmax (https://pytorch.org/docs/stable/generated/torch.nn.functional.softmax.html)
         """
         self.eval() # Set the PyTorch Module to inference mode (this affects things like dropout)
-        
         if not isinstance(source, torch.Tensor):
             source_input = torch.tensor(source).view(1, -1)
         else:
             source_input = source.view(1, -1)
-        
-        # TODO: Implement beam search.
-        raise NotImplementedError()
 
+        encoded_source, source_padding=self.encoder(source_input)
+        beams = [([0], 0.0)] #sequence containing start sequence, log likelyhood
+        for i in range (max_length-1):
+            candidates=[]
+            candidate_prob=[]
+            for (seq, prob) in beams:
+                if seq[-1]==1:
+                    candidates.append((seq, prob))
+                    candidate_prob.append(prob/len(seq))
+                    continue
+                pred, att_weights=self.decoder(encoded_source, source_padding,  torch.tensor(seq).view(1, -1))
+                last_token=pred[:, -1, :]
+                logit=torch.log(torch.softmax(last_token, dim=-1))
+                #take top k first
+                topPred=torch.topk(logit, beam_size)
+                for (val, idx) in zip(topPred.values[0], topPred.indices[0]):
+                    newSeq=seq+[idx.item()]
+                    newProb=prob+val.item()
+                    candidates.append((newSeq,newProb))
+                    candidate_prob.append(newProb/len(newSeq))
+                    
+            probs=torch.tensor(candidate_prob)
+            _,topk=torch.topk(probs, beam_size)
+            beams=[candidates[i] for i in topk]
+
+        bestSeq, bestProb=max(beams,key=lambda x: x[1]/len(x[0]))
+        return bestSeq, bestProb/len(bestSeq)
 
 def flip_elements(input_list):
     return [elem[::-1] for elem in input_list]
@@ -489,13 +533,209 @@ def bleu_score(predicted: List[int], target: List[int], N: int = 4) -> float:
     the BLEU score is 0.
     """
 
-    raise NotImplementedError()
+    def stripSeq(seq):
+        res=[]
+        i=0
+        while seq[i]!=1:
+            if seq[i]==0:
+                i=i+1
+                continue
+            else:
+                res.append(seq[i])
+                i=i+1
+            
+        return res
+    predStrip=stripSeq(predicted)
+    targetStrip=stripSeq(target)
 
+    if len(predStrip)<N or len(targetStrip)<N:
+        return 0
+
+    def computePk(predicted, target, k):
+        count=0
+        def getDict(seq, k):
+            res=dict()
+            for i in range(len(seq)-k+1):
+                currGram=tuple(seq[i: i+k])
+                if currGram not in res:
+                    res[currGram]=1
+                else:
+                    res[currGram]+=1
+            return res
+    
+        predDict=getDict(predicted, k)
+        targetDict=getDict(target, k)
+        for key in predDict:
+            if key not in targetDict:
+                continue
+            else:
+                count+=min(predDict[key], targetDict[key])
+
+        
+        num_ngram=len(predicted)-k+1
+
+        res=count/num_ngram
+        return res
+    res=1
+    for i in range (1, N+1, 1):
+        currScore=computePk(predStrip, targetStrip, i)**(1/N)
+        res=res*currScore
+    brevity_penalty=min(1, np.exp(1-len(targetStrip)/len(predStrip)))
+    return res*brevity_penalty
+        
 
 if __name__ == "__main__":
     train_sentences, test_sentences, source_vocab, target_vocab = load_data()
     train_source, train_target = preprocess_data(train_sentences, len(source_vocab), len(target_vocab), 12)
     test_source, test_target = preprocess_data(test_sentences, len(source_vocab), len(target_vocab), 12)
 
+    embed_dim=256
+    target_vocab_size=len(target_vocab)
+    source_vocab_size=len(source_vocab)
+    epochs = list(range(1, 31))
+    # model2a=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
+    # train_loss2a, test_loss2a= train(model2a, train_source, train_target, test_source, test_target, target_vocab_size)
+    
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2a, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2a, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2a')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2a.png")  # Save as PNG file
+    # plt.show()
+
+
+    # model2b=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
+    # train_loss2b, test_loss2b= train(model2b, train_source, train_target, test_source, test_target, target_vocab_size)
+    
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2b, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2b, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2b')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2b.png")  # Save as PNG file
+    # plt.show()
 
     
+    # model2c=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
+    # train_loss2c, test_loss2c= train(model2c, train_source, train_target, test_source, test_target, target_vocab_size)
+    
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2c, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2c, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2c')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2c.png")  # Save as PNG file
+    # plt.show()
+
+
+    # model2d=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
+    # train_loss2d, test_loss2d= train(model2d, train_source, train_target, test_source, test_target, target_vocab_size)
+    
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2d, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2d, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2d')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2d.png")  # Save as PNG file
+    # plt.show()
+
+    model2e=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+    train_loss2e, test_loss2e= train(model2e, train_source, train_target, test_source, test_target, target_vocab_size)
+    torch.save(model2e.state_dict(), "model2e.pth")
+    # Plotting the losses
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss2e, label='Train Loss', marker='o')
+    plt.plot(epochs, test_loss2e, label='Test Loss', marker='o')
+
+    # Adding labels and title
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Train and Test Loss over 30 Epochs 2e')
+    plt.legend()
+    plt.grid(True)
+
+    # Save the figure
+    plt.savefig("train_test_loss_plot2e.png")  # Save as PNG file
+    plt.show()
+
+
+    def q3Sol():
+        model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+        model.load_state_dict(torch.load("model2e.pth")) 
+        
+        for i in range(6):
+            target_seq=target_seq[i]
+            source_seq=test_source[i]
+            prediction, avg_Log=model.predict(source_seq, beam_size=3, max_length=12)
+            sourceSentence=decode_sentence(source_seq, source_vocab)
+            targetSentence=decode_sentence(target_seq, target_vocab)
+            predictedSentence=decode_sentence(prediction, target_vocab)
+            with open("q3output.txt", "w") as file:
+                file.write("Source Sentence: " + sourceSentence + "\n")
+                file.write("Target Sentence: " + targetSentence + "\n")
+                file.write("Predicted Sentence: " + predictedSentence + "\n")
+                file.write("Average Log-Likelihood: " + str(avg_Log) + "\n")
+                file.write("\n")
+            
+
+
+    def Q3(test_source, test_target, source_vocab, target_vocab, num_examples=6):
+        model = Transformer(
+            source_vocab_size=len(source_vocab),
+            target_vocab_size=len(target_vocab),
+            embedding_dim=256,
+            n_encoder_blocks=2,
+            n_decoder_blocks=3,
+            n_heads=4
+        )
+        model.load_state_dict(torch.load('transformer_model_e.pkl'))
+        examples = torch.randint(0, test_source.shape[0], (num_examples,))
+        for i in examples:
+            source_seq = test_source[i]
+            target_seq = test_target[i]
+
+            pred_seq, avg_log_likelihood = model.predict(source_seq, beam_size=3, max_length=12)
+
+            source_sentence = decode_sentence(source_seq.tolist(), source_vocab)
+            target_sentence = decode_sentence(target_seq.tolist(), target_vocab)
+            predicted_sentence = decode_sentence(pred_seq, target_vocab)
+
+            print(f"Source Sentence: {source_sentence}")
+            print(f"Target Sentence: {target_sentence}")
+            print(f"Predicted Sentence: {predicted_sentence}")
+            print(f"Average Log-Likelihood: {avg_log_likelihood:.4f}")
+            print("-" * 50)
+    # Q3(test_source, test_target, source_vocab, target_vocab)
