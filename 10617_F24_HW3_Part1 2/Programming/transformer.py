@@ -593,88 +593,101 @@ if __name__ == "__main__":
     target_vocab_size=len(target_vocab)
     source_vocab_size=len(source_vocab)
     epochs = list(range(1, 31))
-    # model2a=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
-    # train_loss2a, test_loss2a= train(model2a, train_source, train_target, test_source, test_target, target_vocab_size)
+
+    #model 2a
+    model2a=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
+    train_loss2a, test_loss2a= train(model2a, train_source, train_target, test_source, test_target, target_vocab_size)
+    torch.save(model2a.state_dict(), "model2a.pkl")
+    print("model2a result:\n")
+    print(train_loss2a)
+    print(test_loss2a)
+    # Plotting the losses
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss2a, label='Train Loss', marker='o')
+    plt.plot(epochs, test_loss2a, label='Test Loss', marker='o')
+
+    # Adding labels and title
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Train and Test Loss over 30 Epochs 2a')
+    plt.legend()
+    plt.grid(True)
+
+    # Save the figure
+    plt.savefig("train_test_loss_plot2a.png")  # Save as PNG file
+
+    model2b=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
+    train_loss2b, test_loss2b= train(model2b, train_source, train_target, test_source, test_target, target_vocab_size)
+    torch.save(model2b.state_dict(), "model2b.pkl")
+    print("model2b result:\n")
+    print(train_loss2b)
+    print(test_loss2b)
+    # Plotting the losses
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss2b, label='Train Loss', marker='o')
+    plt.plot(epochs, test_loss2b, label='Test Loss', marker='o')
+
+    # Adding labels and title
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Train and Test Loss over 30 Epochs 2b')
+    plt.legend()
+    plt.grid(True)
+
+    # Save the figure
+    plt.savefig("train_test_loss_plot2b.png")  # Save as PNG file
     
-    # # Plotting the losses
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(epochs, train_loss2a, label='Train Loss', marker='o')
-    # plt.plot(epochs, test_loss2a, label='Test Loss', marker='o')
+    model2c=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
+    train_loss2c, test_loss2c= train(model2c, train_source, train_target, test_source, test_target, target_vocab_size)
+    torch.save(model2c.state_dict(), "model2c.pkl")
+    print("model2c result:\n")
+    print(train_loss2c)
+    print(test_loss2c)
+    # Plotting the losses
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss2c, label='Train Loss', marker='o')
+    plt.plot(epochs, test_loss2c, label='Test Loss', marker='o')
 
-    # # Adding labels and title
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss')
-    # plt.title('Train and Test Loss over 30 Epochs 2a')
-    # plt.legend()
-    # plt.grid(True)
+    # Adding labels and title
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Train and Test Loss over 30 Epochs 2c')
+    plt.legend()
+    plt.grid(True)
 
-    # # Save the figure
-    # plt.savefig("train_test_loss_plot2a.png")  # Save as PNG file
-    # plt.show()
-
-
-    # model2b=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
-    # train_loss2b, test_loss2b= train(model2b, train_source, train_target, test_source, test_target, target_vocab_size)
-    
-    # # Plotting the losses
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(epochs, train_loss2b, label='Train Loss', marker='o')
-    # plt.plot(epochs, test_loss2b, label='Test Loss', marker='o')
-
-    # # Adding labels and title
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss')
-    # plt.title('Train and Test Loss over 30 Epochs 2b')
-    # plt.legend()
-    # plt.grid(True)
-
-    # # Save the figure
-    # plt.savefig("train_test_loss_plot2b.png")  # Save as PNG file
-    # plt.show()
-
-    
-    # model2c=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
-    # train_loss2c, test_loss2c= train(model2c, train_source, train_target, test_source, test_target, target_vocab_size)
-    
-    # # Plotting the losses
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(epochs, train_loss2c, label='Train Loss', marker='o')
-    # plt.plot(epochs, test_loss2c, label='Test Loss', marker='o')
-
-    # # Adding labels and title
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss')
-    # plt.title('Train and Test Loss over 30 Epochs 2c')
-    # plt.legend()
-    # plt.grid(True)
-
-    # # Save the figure
-    # plt.savefig("train_test_loss_plot2c.png")  # Save as PNG file
-    # plt.show()
+    # Save the figure
+    plt.savefig("train_test_loss_plot2c.png")  # Save as PNG file
+    plt.show()
 
 
-    # model2d=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
-    # train_loss2d, test_loss2d= train(model2d, train_source, train_target, test_source, test_target, target_vocab_size)
-    
-    # # Plotting the losses
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(epochs, train_loss2d, label='Train Loss', marker='o')
-    # plt.plot(epochs, test_loss2d, label='Test Loss', marker='o')
+    model2d=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
+    train_loss2d, test_loss2d= train(model2d, train_source, train_target, test_source, test_target, target_vocab_size)
+    torch.save(model2d.state_dict(), "model2d.pkl")
+    print("model2d result:\n")
+    print(train_loss2d)
+    print(test_loss2d)
+    # Plotting the losses
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss2d, label='Train Loss', marker='o')
+    plt.plot(epochs, test_loss2d, label='Test Loss', marker='o')
 
-    # # Adding labels and title
-    # plt.xlabel('Epoch')
-    # plt.ylabel('Loss')
-    # plt.title('Train and Test Loss over 30 Epochs 2d')
-    # plt.legend()
-    # plt.grid(True)
+    # Adding labels and title
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Train and Test Loss over 30 Epochs 2d')
+    plt.legend()
+    plt.grid(True)
 
-    # # Save the figure
-    # plt.savefig("train_test_loss_plot2d.png")  # Save as PNG file
-    # plt.show()
+    # Save the figure
+    plt.savefig("train_test_loss_plot2d.png")  # Save as PNG file
+    plt.show()
 
     model2e=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
     train_loss2e, test_loss2e= train(model2e, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2e.state_dict(), "model2e.pth")
+    torch.save(model2e.state_dict(), "model2e.pkl")
+    print("model2e result:\n")
+    print(train_loss2e)
+    print(test_loss2e)
     # Plotting the losses
     plt.figure(figsize=(10, 6))
     plt.plot(epochs, train_loss2e, label='Train Loss', marker='o')
@@ -710,32 +723,18 @@ if __name__ == "__main__":
                 file.write("Average Log-Likelihood: " + str(avg_Log) + "\n")
                 file.write("\n")
             
+    q3Sol()
 
+    def q4Sol():
+        for i in range(3):
+            currTrainSource=train_source[i]
+            currTrainTarget=train_target[i]
+            model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+            model.load_state_dict(torch.load("model2e.pth")) 
+            _, attentionMatrix=model(currTrainSource, currTrainTarget)
+            print(attentionMatrix)
+            visualize_attention(currTrainSource, currTrainTarget, target_vocab, attentionMatrix, )
 
-    def Q3(test_source, test_target, source_vocab, target_vocab, num_examples=6):
-        model = Transformer(
-            source_vocab_size=len(source_vocab),
-            target_vocab_size=len(target_vocab),
-            embedding_dim=256,
-            n_encoder_blocks=2,
-            n_decoder_blocks=3,
-            n_heads=4
-        )
-        model.load_state_dict(torch.load('transformer_model_e.pkl'))
-        examples = torch.randint(0, test_source.shape[0], (num_examples,))
-        for i in examples:
-            source_seq = test_source[i]
-            target_seq = test_target[i]
+    # def q5Sol():
 
-            pred_seq, avg_log_likelihood = model.predict(source_seq, beam_size=3, max_length=12)
-
-            source_sentence = decode_sentence(source_seq.tolist(), source_vocab)
-            target_sentence = decode_sentence(target_seq.tolist(), target_vocab)
-            predicted_sentence = decode_sentence(pred_seq, target_vocab)
-
-            print(f"Source Sentence: {source_sentence}")
-            print(f"Target Sentence: {target_sentence}")
-            print(f"Predicted Sentence: {predicted_sentence}")
-            print(f"Average Log-Likelihood: {avg_log_likelihood:.4f}")
-            print("-" * 50)
     # Q3(test_source, test_target, source_vocab, target_vocab)
