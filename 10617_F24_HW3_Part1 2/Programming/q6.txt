@@ -1,0 +1,10 @@
+Average BLEU Score for model 2a: 0.0
+Average BLEU Score for model 2b: 0.0
+Average BLEU Score for model 2c: 0.0
+Average BLEU Score for model 2d: 0.0
+Average BLEU Score for model 2e: 0.0
+Average BLEU Score for model 2a: 0.40969036140579135
+Average BLEU Score for model 2b: 0.4347126023407115
+Average BLEU Score for model 2c: 0.4333293210002205
+Average BLEU Score for model 2d: 0.44424433162210747
+Average BLEU Score for model 2e: 0.4526476829138632

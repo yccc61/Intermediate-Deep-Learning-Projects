@@ -1,0 +1,35 @@
+Source Sentence: you re my best customer .
+Target Sentence: vous tes mon meilleur client .
+Predicted Sentence: tu es ma meilleure cliente .
+Average Log-Likelihood: -0.10706029261109506
+
+Source Sentence: you are such a liar !
+Target Sentence: vous tes une de ces menteuses !
+Predicted Sentence: tu es un de ces menteurs !
+Average Log-Likelihood: -0.06665110565437418
+
+Source Sentence: she is shy of strangers .
+Target Sentence: elle est intimid e par les trangers .
+Predicted Sentence: elle est timide de classe .
+Average Log-Likelihood: -0.37530250393410824
+
+Source Sentence: he is stronger than ever .
+Target Sentence: il est plus fort que jamais .
+Predicted Sentence: il est plus fort que .
+Average Log-Likelihood: -0.20507262102864843
+
+Source Sentence: i m doing my best .
+Target Sentence: je fais de mon mieux .
+Predicted Sentence: je fais de mon mieux .
+Average Log-Likelihood: -0.022111526171102014
+
+Source Sentence: he is superior to her in math .
+Target Sentence: il est sup rieur elle en maths .
+Predicted Sentence: il a de ses en math matiques .
+Average Log-Likelihood: -0.5609934297881409
+
+Source Sentence: you re my best customer .
+Target Sentence: vous tes mon meilleur client .
+Predicted Sentence: tu es ma meilleure cliente .
+Average Log-Likelihood: -0.10706029261109506
+

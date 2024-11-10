@@ -595,146 +595,212 @@ if __name__ == "__main__":
     epochs = list(range(1, 31))
 
     #model 2a
-    model2a=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
-    train_loss2a, test_loss2a= train(model2a, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2a.state_dict(), "model2a.pkl")
-    print("model2a result:\n")
-    print(train_loss2a)
-    print(test_loss2a)
-    # Plotting the losses
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss2a, label='Train Loss', marker='o')
-    plt.plot(epochs, test_loss2a, label='Test Loss', marker='o')
+    # model2a=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
+    # train_loss2a, test_loss2a= train(model2a, train_source, train_target, test_source, test_target, target_vocab_size)
+    # torch.save(model2a.state_dict(), "model2a.pkl")
+    # print("model2a result:\n")
+    # print(train_loss2a)
+    # print(test_loss2a)
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2a, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2a, label='Test Loss', marker='o')
 
-    # Adding labels and title
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss over 30 Epochs 2a')
-    plt.legend()
-    plt.grid(True)
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2a')
+    # plt.legend()
+    # plt.grid(True)
 
-    # Save the figure
-    plt.savefig("train_test_loss_plot2a.png")  # Save as PNG file
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2a.png")  # Save as PNG file
 
-    model2b=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
-    train_loss2b, test_loss2b= train(model2b, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2b.state_dict(), "model2b.pkl")
-    print("model2b result:\n")
-    print(train_loss2b)
-    print(test_loss2b)
-    # Plotting the losses
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss2b, label='Train Loss', marker='o')
-    plt.plot(epochs, test_loss2b, label='Test Loss', marker='o')
+    # model2b=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
+    # train_loss2b, test_loss2b= train(model2b, train_source, train_target, test_source, test_target, target_vocab_size)
+    # torch.save(model2b.state_dict(), "model2b.pkl")
+    # print("model2b result:\n")
+    # print(train_loss2b)
+    # print(test_loss2b)
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2b, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2b, label='Test Loss', marker='o')
 
-    # Adding labels and title
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss over 30 Epochs 2b')
-    plt.legend()
-    plt.grid(True)
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2b')
+    # plt.legend()
+    # plt.grid(True)
 
-    # Save the figure
-    plt.savefig("train_test_loss_plot2b.png")  # Save as PNG file
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2b.png")  # Save as PNG file
     
-    model2c=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
-    train_loss2c, test_loss2c= train(model2c, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2c.state_dict(), "model2c.pkl")
-    print("model2c result:\n")
-    print(train_loss2c)
-    print(test_loss2c)
-    # Plotting the losses
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss2c, label='Train Loss', marker='o')
-    plt.plot(epochs, test_loss2c, label='Test Loss', marker='o')
+    # model2c=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
+    # train_loss2c, test_loss2c= train(model2c, train_source, train_target, test_source, test_target, target_vocab_size)
+    # torch.save(model2c.state_dict(), "model2c.pkl")
+    # print("model2c result:\n")
+    # print(train_loss2c)
+    # print(test_loss2c)
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2c, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2c, label='Test Loss', marker='o')
 
-    # Adding labels and title
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss over 30 Epochs 2c')
-    plt.legend()
-    plt.grid(True)
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2c')
+    # plt.legend()
+    # plt.grid(True)
 
-    # Save the figure
-    plt.savefig("train_test_loss_plot2c.png")  # Save as PNG file
-    plt.show()
-
-
-    model2d=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
-    train_loss2d, test_loss2d= train(model2d, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2d.state_dict(), "model2d.pkl")
-    print("model2d result:\n")
-    print(train_loss2d)
-    print(test_loss2d)
-    # Plotting the losses
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss2d, label='Train Loss', marker='o')
-    plt.plot(epochs, test_loss2d, label='Test Loss', marker='o')
-
-    # Adding labels and title
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss over 30 Epochs 2d')
-    plt.legend()
-    plt.grid(True)
-
-    # Save the figure
-    plt.savefig("train_test_loss_plot2d.png")  # Save as PNG file
-    plt.show()
-
-    model2e=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
-    train_loss2e, test_loss2e= train(model2e, train_source, train_target, test_source, test_target, target_vocab_size)
-    torch.save(model2e.state_dict(), "model2e.pkl")
-    print("model2e result:\n")
-    print(train_loss2e)
-    print(test_loss2e)
-    # Plotting the losses
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss2e, label='Train Loss', marker='o')
-    plt.plot(epochs, test_loss2e, label='Test Loss', marker='o')
-
-    # Adding labels and title
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss over 30 Epochs 2e')
-    plt.legend()
-    plt.grid(True)
-
-    # Save the figure
-    plt.savefig("train_test_loss_plot2e.png")  # Save as PNG file
-    plt.show()
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2c.png")  # Save as PNG file
+    # plt.show()
 
 
-    def q3Sol():
-        model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
-        model.load_state_dict(torch.load("model2e.pth")) 
+    # model2d=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
+    # train_loss2d, test_loss2d= train(model2d, train_source, train_target, test_source, test_target, target_vocab_size)
+    # torch.save(model2d.state_dict(), "model2d.pkl")
+    # print("model2d result:\n")
+    # print(train_loss2d)
+    # print(test_loss2d)
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2d, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2d, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2d')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2d.png")  # Save as PNG file
+    # plt.show()
+
+    # model2e=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+    # train_loss2e, test_loss2e= train(model2e, train_source, train_target, test_source, test_target, target_vocab_size)
+    # torch.save(model2e.state_dict(), "model2e.pkl")
+    # print("model2e result:\n")
+    # print(train_loss2e)
+    # print(test_loss2e)
+    # # Plotting the losses
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(epochs, train_loss2e, label='Train Loss', marker='o')
+    # plt.plot(epochs, test_loss2e, label='Test Loss', marker='o')
+
+    # # Adding labels and title
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss')
+    # plt.title('Train and Test Loss over 30 Epochs 2e')
+    # plt.legend()
+    # plt.grid(True)
+
+    # # Save the figure
+    # plt.savefig("train_test_loss_plot2e.png")  # Save as PNG file
+    # plt.show()
+
+
+    # def q3Sol():
+    #     model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+    #     model.load_state_dict(torch.load("model2e.pkl")) 
         
-        for i in range(6):
-            target_seq=target_seq[i]
-            source_seq=test_source[i]
-            prediction, avg_Log=model.predict(source_seq, beam_size=3, max_length=12)
-            sourceSentence=decode_sentence(source_seq, source_vocab)
-            targetSentence=decode_sentence(target_seq, target_vocab)
-            predictedSentence=decode_sentence(prediction, target_vocab)
-            with open("q3output.txt", "w") as file:
-                file.write("Source Sentence: " + sourceSentence + "\n")
-                file.write("Target Sentence: " + targetSentence + "\n")
-                file.write("Predicted Sentence: " + predictedSentence + "\n")
-                file.write("Average Log-Likelihood: " + str(avg_Log) + "\n")
-                file.write("\n")
+    #     for i in range(6):
+    #         target_seq=test_target[i]
+    #         source_seq=test_source[i]
+    #         prediction, avg_Log=model.predict(source_seq, beam_size=3, max_length=12)
+    #         sourceSentence=decode_sentence(source_seq, source_vocab)
+    #         targetSentence=decode_sentence(target_seq, target_vocab)
+    #         predictedSentence=decode_sentence(prediction, target_vocab)
+    #         print(i)
+    #         with open("q3output.txt", "a") as file:
+    #             file.write("Source Sentence: " + sourceSentence + "\n")
+    #             file.write("Target Sentence: " + targetSentence + "\n")
+    #             file.write("Predicted Sentence: " + predictedSentence + "\n")
+    #             file.write("Average Log-Likelihood: " + str(avg_Log) + "\n")
+    #             file.write("\n")
             
-    q3Sol()
+    # q3Sol()
 
-    def q4Sol():
-        for i in range(3):
-            currTrainSource=train_source[i]
-            currTrainTarget=train_target[i]
-            model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
-            model.load_state_dict(torch.load("model2e.pth")) 
-            _, attentionMatrix=model(currTrainSource, currTrainTarget)
-            print(attentionMatrix)
-            visualize_attention(currTrainSource, currTrainTarget, target_vocab, attentionMatrix, )
+    # def q4Sol():
+    #     model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+    #     model.load_state_dict(torch.load("model2e.pkl")) 
+    #     for i in range(3):
+    #         currTrainSource=train_source[i].view(1, len(train_source[i]))
+    #         currTrainTarget=train_target[i].view(1, len(train_target[i]))
+    #         _, attentionMatrix=model.forward(currTrainSource, currTrainTarget)
+    #         attention=attentionMatrix[0]
+    #         print(train_source[i])
+    #         for j in range(attention.shape[0]):
+    #             #convert to np array
+    #             attention_np=attention[j].detach().cpu().numpy()
+    #             visualize_attention(train_source[i].tolist(), train_target[i].tolist(),source_vocab, target_vocab,attention_np, i,j)
+    # q4Sol()
+
 
     # def q5Sol():
+    #     model=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+    #     model.load_state_dict(torch.load("model2e.pkl")) 
+    #     total=[]
+    #     for beamSize in range(1,9,1):
+    #         log_likelyhood=[]
+    #         for i in range (100):
+    #             print(i)
+    #             currTestSource=test_source[i]
+    #             bestSeq, log=model.predict(currTestSource, beam_size=beamSize)
+    #             log_likelyhood.append(log)
+    #         total.append(sum(log_likelyhood)/len(log_likelyhood))
+    #     x_values = list(range(1, 9))
 
-    # Q3(test_source, test_target, source_vocab, target_vocab)
+    #     plt.plot(x_values, total, marker='o')
+    #     plt.xlabel("BeamSize")
+    #     plt.ylabel("Average normalized log-likelihood")
+    #     plt.title("Beam Size over average normalized log-likelihood")
+    #     plt.savefig('q5.png')
+
+    # q5Sol()
+
+    def q6Sol():
+        modelA=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 1)
+        modelA.load_state_dict(torch.load("model2a.pkl")) 
+        modelB=Transformer(source_vocab_size, target_vocab_size, embed_dim, 1, 1, 2)
+        modelB.load_state_dict(torch.load("model2b.pkl")) 
+        modelC=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 1, 1)
+        modelC.load_state_dict(torch.load("model2c.pkl")) 
+        modelD=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 2, 2)
+        modelD.load_state_dict(torch.load("model2d.pkl")) 
+        modelE=Transformer(source_vocab_size, target_vocab_size, embed_dim, 2, 3, 4)
+        modelE.load_state_dict(torch.load("model2e.pkl")) 
+
+        def computeAvgBleu(model):
+            score=[]
+            for i in range(len(test_source)):
+                currTestSource=test_source[i]
+                currTestTarget=test_target[i].tolist()
+                prediction, log=model.predict(currTestSource, beam_size=3)
+                for j in range(1, 5, 1):
+                    currBleu=bleu_score(prediction, currTestTarget, j)
+                    score.append(currBleu)
+            return sum(score)/len(score)
+        
+        bleu_A=computeAvgBleu(modelA)
+        print(bleu_A)
+        bleu_B=computeAvgBleu(modelB)
+        print("b")
+        bleu_C=computeAvgBleu(modelC)
+        print("c")
+        bleu_D=computeAvgBleu(modelD)
+        print("d")
+        bleu_E=computeAvgBleu(modelE)
+        print("e")
+        with open("q6.txt", "a") as file:
+                file.write("Average BLEU Score for model 2a: " + str(bleu_A) + "\n")
+                file.write("Average BLEU Score for model 2b: " + str(bleu_B) + "\n")
+                file.write("Average BLEU Score for model 2c: " + str(bleu_C) + "\n")
+                file.write("Average BLEU Score for model 2d: " + str(bleu_D) + "\n")
+                file.write("Average BLEU Score for model 2e: " + str(bleu_E) + "\n")
+    q6Sol()
